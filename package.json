@@ -1,6 +1,6 @@
 {
-  "name": "fontproof",
-  "version": "2.6.3",
+  "name": "glyphrow",
+  "version": "3.0.0",
   "description": "Accessible, dependency-free type tester for the web — a vanilla JS core with an optional React wrapper. Composable OpenType features, variable-font axes, and auto-fit sizing.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -52,11 +52,11 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/quitequinn/fontproof.git"
+    "url": "git+https://github.com/quitequinn/glyphrow.git"
   },
-  "homepage": "https://github.com/quitequinn/fontproof#readme",
+  "homepage": "https://github.com/quitequinn/glyphrow#readme",
   "bugs": {
-    "url": "https://github.com/quitequinn/fontproof/issues"
+    "url": "https://github.com/quitequinn/glyphrow/issues"
   },
   "peerDependencies": {
     "react": ">=17",

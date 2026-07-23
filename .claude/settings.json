@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "Agent(*)",
+      "Skill(*)",
+      "Skill(*:*)",
+      "NotebookEdit(*)",
+      "Bash(git rm:*)",
+      "Bash(npm info:*)",
+      "Bash(git pull:*)",
+      "mcp__analytics-mcp__get_account_summaries",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "mcp__plugin_vercel-plugin_vercel__list_teams",
+      "mcp__plugin_vercel-plugin_vercel__list_projects",
+      "mcp__plugin_vercel-plugin_vercel__get_project",
+      "mcp__plugin_vercel-plugin_vercel__get_deployment_build_logs",
+      "mcp__claude_ai_GoDaddy__domains_check_availability",
+      "mcp__claude_ai_Vercel__list_projects",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "Bash(sed -i '' '130s|skipIfFileContains: \"^['\"'\"'\\\\\\\\\"]use client['\"'\"'\\\\\\\\\"]\"|skipIfFileContains: \"^['\"'\"'\\\\\\\\\"]use client['\"'\"'\\\\\\\\\"]|new URL\\(request\"|' /Users/quinn-keaveney/.claude/plugins/cache/vercel-vercel-plugin/vercel-plugin/0.32.0/skills/nextjs/overlay.yaml)",
+      "Bash(sed -i '' '135s|skipIfFileContains: \"^['\"'\"'\\\\\\\\\"]use client['\"'\"'\\\\\\\\\"]\"|skipIfFileContains: \"^['\"'\"'\\\\\\\\\"]use client['\"'\"'\\\\\\\\\"]|new URL\\(request\"|' /Users/quinn-keaveney/.claude/plugins/cache/vercel-vercel-plugin/vercel-plugin/0.32.0/skills/nextjs/overlay.yaml)"
+    
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git reset --hard *)",
+      "Bash(git push --force *)",
+      "Bash(git push * --force *)",
+      "Bash(git clean -f *)",
+      "Bash(git checkout -- .)",
+      "Bash(git branch -D *)",
+      "Bash(> /dev/*)",
+      "Bash(dd *)",
+      "Bash(mkfs *)",
+      "Bash(kill -9 *)",
+      "Bash(shutdown *)",
+      "Bash(reboot *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "firecrawl"
+  ]
+}

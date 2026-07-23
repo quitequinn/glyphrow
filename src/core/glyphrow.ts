@@ -1,4 +1,4 @@
-// Framework-agnostic, dependency-free FontProof.
+// Framework-agnostic, dependency-free Glyphrow.
 //
 // Replaces the legacy jQuery/jQuery-UI/bigtext widget. Key differences:
 //  - No eval, no innerHTML with user data — DOM is built with createElement and
@@ -26,8 +26,8 @@ import type {
 	AxisConfig,
 	ControlsConfig,
 	Range,
-	FontProofOptions,
-	FontProofState,
+	GlyphrowOptions,
+	GlyphrowState,
 } from "./types.js";
 
 /** Default slider ranges, overridable per control. */
@@ -53,12 +53,12 @@ function resolveRange(value: boolean | Range | undefined, fallback: Range): Rang
 	return { min: value.min, max: value.max, step: value.step ?? fallback.step };
 }
 
-/** A FontProof instance bound to a host element. */
-export class FontProof {
+/** A Glyphrow instance bound to a host element. */
+export class Glyphrow {
 	private readonly host: HTMLElement;
-	private readonly options: FontProofOptions;
+	private readonly options: GlyphrowOptions;
 	private readonly controls: ControlsConfig;
-	private readonly state: FontProofState;
+	private readonly state: GlyphrowState;
 	private readonly activeFeatures = new Set<FeatureTag>();
 	private readonly cleanups: Array<() => void> = [];
 
@@ -75,7 +75,7 @@ export class FontProof {
 	 * @param host Element to render the tester into.
 	 * @param options Configuration; all fields optional.
 	 */
-	constructor(host: HTMLElement, options: FontProofOptions = {}) {
+	constructor(host: HTMLElement, options: GlyphrowOptions = {}) {
 		this.host = host;
 		this.options = options;
 		this.controls = options.controls ?? {};
@@ -109,7 +109,7 @@ export class FontProof {
 	}
 
 	/** Returns a snapshot of the current state. */
-	getState(): FontProofState {
+	getState(): GlyphrowState {
 		return {
 			...this.state,
 			features: Array.from(this.activeFeatures),
@@ -128,11 +128,11 @@ export class FontProof {
 	// ---- rendering -------------------------------------------------------
 
 	private render(): void {
-		this.host.classList.add("fp");
-		if (this.options.showValues) this.host.classList.add("fp--show-values");
+		this.host.classList.add("glyphrow");
+		if (this.options.showValues) this.host.classList.add("glyphrow--show-values");
 
 		this.textEl = el("div", {
-			class: "fp__text",
+			class: "glyphrow__text",
 			text: this.state.text,
 			attrs: {
 				role: "textbox",
@@ -143,11 +143,11 @@ export class FontProof {
 				"data-placeholder": this.options.placeholder ?? "Type to test…",
 			},
 		});
-		this.typeEl = el("div", { class: "fp__type", children: [this.textEl] });
-		const stage = el("div", { class: "fp__stage", children: [this.typeEl] });
+		this.typeEl = el("div", { class: "glyphrow__type", children: [this.textEl] });
+		const stage = el("div", { class: "glyphrow__stage", children: [this.typeEl] });
 
 		this.liveEl = el("div", {
-			class: "fp__sr-only",
+			class: "glyphrow__sr-only",
 			attrs: { "aria-live": "polite", "aria-atomic": "true" },
 		});
 
@@ -182,7 +182,7 @@ export class FontProof {
 
 		if (items.length === 0) return null;
 		return el("div", {
-			class: "fp__controls",
+			class: "glyphrow__controls",
 			attrs: { role: "group", "aria-label": "Typography controls" },
 			children: items,
 		});
@@ -196,9 +196,9 @@ export class FontProof {
 	 * underlying input (z-index) and ignores pointer events so dragging works.
 	 */
 	private caption(title: string, value?: HTMLElement): HTMLSpanElement {
-		const labelSpan = el("span", { class: "fp__label", text: title });
+		const labelSpan = el("span", { class: "glyphrow__label", text: title });
 		return el("span", {
-			class: "fp__caption",
+			class: "glyphrow__caption",
 			attrs: { "aria-hidden": "true" },
 			children: value ? [labelSpan, value] : [labelSpan],
 		});
@@ -212,9 +212,9 @@ export class FontProof {
 		unit: string,
 		onInput: (value: number) => void,
 	): HTMLElement {
-		const output = el("output", { class: "fp__value", text: `${value}${unit}` });
+		const output = el("output", { class: "glyphrow__value", text: `${value}${unit}` });
 		const input = el("input", {
-			class: `fp__slider fp__slider--${key}`,
+			class: `glyphrow__slider glyphrow__slider--${key}`,
 			attrs: {
 				type: "range",
 				min: range.min,
@@ -228,7 +228,7 @@ export class FontProof {
 		// the filled portion of the track (a green/accent fill) without JS styling.
 		const span = range.max - range.min || 1;
 		const setFill = (v: number) =>
-			input.style.setProperty("--fp-fill", `${((v - range.min) / span) * 100}%`);
+			input.style.setProperty("--glyphrow-fill", `${((v - range.min) / span) * 100}%`);
 		setFill(value);
 		const handler = () => {
 			const v = Number(input.value);
@@ -242,7 +242,7 @@ export class FontProof {
 		this.cleanups.push(() => input.removeEventListener("input", handler));
 		if (key === "size") this.sizeOutput = output;
 		return el("label", {
-			class: `fp__control fp__control--${key}`,
+			class: `glyphrow__control glyphrow__control--${key}`,
 			children: [input, this.caption(label, output)],
 		});
 	}
@@ -310,13 +310,13 @@ export class FontProof {
 			? this.controls.palette
 			: ["normal", "light", "dark"];
 		const select = el("select", {
-			class: "fp__select fp__select--palette",
+			class: "glyphrow__select glyphrow__select--palette",
 			attrs: { "aria-label": "Palette" },
 			children: opts.map((p) =>
 				el("option", { text: p, attrs: { value: p, selected: p === this.state.palette } }),
 			),
 		});
-		const value = el("span", { class: "fp__value", text: this.state.palette });
+		const value = el("span", { class: "glyphrow__value", text: this.state.palette });
 		const handler = () => {
 			this.state.palette = select.value;
 			value.textContent = select.value;
@@ -327,7 +327,7 @@ export class FontProof {
 		select.addEventListener("change", handler);
 		this.cleanups.push(() => select.removeEventListener("change", handler));
 		return el("label", {
-			class: "fp__control fp__control--palette",
+			class: "glyphrow__control glyphrow__control--palette",
 			children: [select, this.caption("Palette", value)],
 		});
 	}
@@ -339,7 +339,7 @@ export class FontProof {
 		onToggle: (pressed: boolean) => void,
 	): HTMLButtonElement {
 		const button = el("button", {
-			class: `fp__toggle fp__toggle--${key}`,
+			class: `glyphrow__toggle glyphrow__toggle--${key}`,
 			// aria-pressed is a string-valued ARIA state and must always be present
 			// ("false"), unlike boolean HTML attributes which are omitted when off.
 			attrs: { type: "button", "aria-pressed": String(pressed), "aria-label": label },
@@ -362,7 +362,7 @@ export class FontProof {
 			this.applyStyles();
 			this.emitChange();
 		});
-		return el("div", { class: "fp__control", children: [button] });
+		return el("div", { class: "glyphrow__control", children: [button] });
 	}
 
 	private buildWrap(): HTMLElement {
@@ -372,12 +372,12 @@ export class FontProof {
 			this.applyStyles();
 			this.emitChange();
 		});
-		return el("div", { class: "fp__control", children: [button] });
+		return el("div", { class: "glyphrow__control", children: [button] });
 	}
 
 	private buildAlign(): HTMLElement {
 		const select = el("select", {
-			class: "fp__select fp__select--align",
+			class: "glyphrow__select glyphrow__select--align",
 			attrs: { "aria-label": "Alignment" },
 			children: ALIGNS.map((a) =>
 				el("option", {
@@ -386,7 +386,7 @@ export class FontProof {
 				}),
 			),
 		});
-		const value = el("span", { class: "fp__value", text: this.state.align });
+		const value = el("span", { class: "glyphrow__value", text: this.state.align });
 		const handler = () => {
 			const v = select.value as Align;
 			if (ALIGNS.includes(v)) {
@@ -400,7 +400,7 @@ export class FontProof {
 		select.addEventListener("change", handler);
 		this.cleanups.push(() => select.removeEventListener("change", handler));
 		return el("label", {
-			class: "fp__control fp__control--align",
+			class: "glyphrow__control glyphrow__control--align",
 			children: [select, this.caption("Align", value)],
 		});
 	}
@@ -414,9 +414,9 @@ export class FontProof {
 					.map((tag) => FEATURE_BY_TAG.get(tag) ?? { tag, label: featureLabel(tag), group: "Alternates" })
 			: FEATURES;
 
-		const panelId = `fp-feat-${nextId()}`;
+		const panelId = `glyphrow-feat-${nextId()}`;
 		const toggle = el("button", {
-			class: "fp__toggle fp__toggle--features",
+			class: "glyphrow__toggle glyphrow__toggle--features",
 			attrs: {
 				type: "button",
 				"aria-label": "Features",
@@ -435,19 +435,19 @@ export class FontProof {
 			input.addEventListener("change", onChange);
 			this.cleanups.push(() => input.removeEventListener("change", onChange));
 			return el("label", {
-				class: "fp__feature",
+				class: "glyphrow__feature",
 				children: [input, el("span", { text: f.label })],
 			});
 		});
 
 		const panel = el("div", {
-			class: "fp__panel",
+			class: "glyphrow__panel",
 			attrs: { id: panelId, role: "group", "aria-label": "OpenType features", hidden: true },
 			children: checks,
 		});
 
 		const wrapper = el("div", {
-			class: "fp__control fp__control--features",
+			class: "glyphrow__control glyphrow__control--features",
 			children: [toggle, panel],
 		});
 

@@ -1,11 +1,11 @@
-# FontProof
+# Glyphrow
 
-[![npm](https://img.shields.io/npm/v/fontproof.svg)](https://www.npmjs.com/package/fontproof)
-[![CI](https://github.com/quitequinn/fontproof/actions/workflows/ci.yml/badge.svg)](https://github.com/quitequinn/fontproof/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/glyphrow.svg)](https://www.npmjs.com/package/glyphrow)
+[![CI](https://github.com/quitequinn/glyphrow/actions/workflows/ci.yml/badge.svg)](https://github.com/quitequinn/glyphrow/actions/workflows/ci.yml)
 
-**[▶ Live demo](https://quitequinn.github.io/fontproof/)**
+**[▶ Live demo](https://quitequinn.github.io/glyphrow/)**
 
-![FontProof: the segmented control bar (size, tracking, weight, optical, italic, align, wrap, features) beneath a live type specimen](https://raw.githubusercontent.com/quitequinn/fontproof/master/assets/bar.png?v=2)
+![Glyphrow: the segmented control bar (size, tracking, weight, optical, italic, align, wrap, features) beneath a live type specimen](https://raw.githubusercontent.com/quitequinn/glyphrow/master/assets/bar.png?v=2)
 
 A **micro toolbar** for testing type on the web — a compact bar of controls over a
 live, editable sample. Accessible and **dependency-free**: adjust size, tracking,
@@ -13,11 +13,11 @@ weight, italic, alignment, line-wrap, and **composable OpenType features** live.
 Ships a framework-agnostic vanilla core and an optional React component.
 
 > Formerly published as `type-tester-tdf` (and briefly `typebar-tdf`); renamed to
-> **FontProof** to reflect what it really is — a focused type-proofing toolbar: a
+> **Glyphrow** to reflect what it really is — a focused type-proofing toolbar: a
 > compact bar of controls over a live sample.
 
 > **v2 is a ground-up rewrite.** The legacy jQuery + jQuery UI + BigText widget
-> (v1) is preserved at the [`v1.0.0`](https://github.com/quitequinn/fontproof/releases/tag/v1.0.0)
+> (v1) is preserved at the [`v1.0.0`](https://github.com/quitequinn/glyphrow/releases/tag/v1.0.0)
 > git tag. v2 has **no runtime
 > dependencies**, builds accessible native controls, escapes all input (no
 > `eval`, no `innerHTML`), composes multiple OpenType features at once, and
@@ -36,13 +36,13 @@ Ships a framework-agnostic vanilla core and an optional React component.
 ## Install
 
 ```bash
-npm install fontproof
+npm install glyphrow
 ```
 
 Import the stylesheet once (optional — the component works without it):
 
 ```js
-import "fontproof/styles.css";
+import "glyphrow/styles.css";
 ```
 
 ## Vanilla JS
@@ -50,10 +50,10 @@ import "fontproof/styles.css";
 ### Programmatic
 
 ```js
-import { FontProof } from "fontproof";
-import "fontproof/styles.css";
+import { Glyphrow } from "glyphrow";
+import "glyphrow/styles.css";
 
-const tester = new FontProof(document.querySelector("#demo"), {
+const tester = new Glyphrow(document.querySelector("#demo"), {
   text: "Typography",
   fontFamily: "Inter",
   size: 96,
@@ -68,7 +68,7 @@ tester.destroy();
 
 ```html
 <div
-  data-fontproof
+  data-glyphrow
   data-font="Inter"
   data-size="96"
   data-text="Typography"
@@ -76,9 +76,9 @@ tester.destroy();
 ></div>
 
 <script type="module">
-  import { autoInit } from "fontproof";
-  import "fontproof/styles.css";
-  autoInit(); // initialises every [data-fontproof] element
+  import { autoInit } from "glyphrow";
+  import "glyphrow/styles.css";
+  autoInit(); // initialises every [data-glyphrow] element
 </script>
 ```
 
@@ -87,12 +87,12 @@ tester.destroy();
 ## React
 
 ```tsx
-import { FontProofComponent } from "fontproof/react";
-import "fontproof/styles.css";
+import { Glyphrow } from "glyphrow/react";
+import "glyphrow/styles.css";
 
 export function Demo() {
   return (
-    <FontProofComponent
+    <Glyphrow
       text="Typography"
       fontFamily="Inter"
       size={96}
@@ -107,7 +107,7 @@ React is a **peer dependency** (>=17); the core stays dependency-free.
 
 ## Options
 
-`new FontProof(host, options)` / `<FontProofComponent {...options} />`:
+`new Glyphrow(host, options)` / `<Glyphrow {...options} />`:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -131,7 +131,7 @@ React is a **peer dependency** (>=17); the core stays dependency-free.
 | `ariaLabel` | `string` | `"Sample text"` | Accessible name for the editable region. |
 | `onChange` | `(state) => void` | — | Called on every state change. |
 
-When `fontFamily` is set, FontProof asks the browser (Font Loading API) to load
+When `fontFamily` is set, Glyphrow asks the browser (Font Loading API) to load
 the matching weight/style as you change them, so toggling italic or weight uses
 the real glyphs instead of a heavier-looking fallback.
 
@@ -164,7 +164,7 @@ control; all other axes (`opsz`, `slnt`, `wdth`, `ital`, or custom `GRAD`/`SOFT`
 `WONK`…) get their own slider and compose into one `font-variation-settings`.
 
 ```js
-new FontProof(el, {
+new Glyphrow(el, {
   fontFamily: "Fraunces",
   variable: {
     wght: { min: 100, max: 900 },
@@ -178,7 +178,7 @@ new FontProof(el, {
 When an `opsz` axis is configured, `font-optical-sizing: none` is set so your
 manual value isn't overridden by the browser's automatic optical sizing.
 
-![Fraunces at weight 200 / optical 12 versus weight 850 / optical 144, showing the variable axes](https://raw.githubusercontent.com/quitequinn/fontproof/master/assets/axes.png?v=2)
+![Fraunces at weight 200 / optical 12 versus weight 850 / optical 144, showing the variable axes](https://raw.githubusercontent.com/quitequinn/glyphrow/master/assets/axes.png?v=2)
 
 **Colour fonts** (COLR/CPAL — e.g. Nabla, Bungee Spice). They render in colour
 automatically; expose palette switching with `controls.palette` (sets
@@ -195,7 +195,7 @@ define with [`@font-palette-values`](https://developer.mozilla.org/docs/Web/CSS/
 controls: { palette: ["normal", "light", "dark", "--brand"] }
 ```
 
-![The Nabla colour font in two custom palettes — sunset and candy](https://raw.githubusercontent.com/quitequinn/fontproof/master/assets/colour.png?v=2)
+![The Nabla colour font in two custom palettes — sunset and candy](https://raw.githubusercontent.com/quitequinn/glyphrow/master/assets/colour.png?v=2)
 
 **Honest proofing.** Set `synthesis: false` to apply `font-synthesis: none`, so a
 missing bold/italic renders as the real font rather than a faux (synthesised)
@@ -210,12 +210,12 @@ Unlike v1 (one feature at a time), **features compose**: selecting Small Caps
 and Oldstyle Figures yields `font-feature-settings: "smcp" 1, "onum" 1`.
 
 ```js
-import { FEATURES, featureSettings } from "fontproof";
+import { FEATURES, featureSettings } from "glyphrow";
 
 featureSettings(["smcp", "onum"]); // => '"smcp" 1, "onum" 1'
 ```
 
-![Fraunces with default lining figures versus oldstyle figures and fractions enabled](https://raw.githubusercontent.com/quitequinn/fontproof/master/assets/features.png?v=2)
+![Fraunces with default lining figures versus oldstyle figures and fractions enabled](https://raw.githubusercontent.com/quitequinn/glyphrow/master/assets/features.png?v=2)
 
 Supported tags include ligatures (`liga`, `dlig`, `hlig`, `clig`), case (`smcp`,
 `c2sc`, `case`, `cpsp`), figures (`lnum`, `onum`, `pnum`, `tnum`, `zero`, `ordn`),
@@ -246,37 +246,37 @@ fills. Set [`showValues`](#options) to also show the value (`Size: 96px`). Impor
 the stylesheet to get it:
 
 ```js
-import "fontproof/styles.css";
+import "glyphrow/styles.css";
 ```
 
 The look is **monochrome by default** and driven by CSS variables on the host:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `--fp-accent` | `#000` | Focus rings, slider/checkbox accent |
-| `--fp-bg` / `--fp-fg` | `#fff` / `#000` | Component background / text |
-| `--fp-bar-bg` | `#fff` | Bar background |
-| `--fp-bar-track` | `#e5e5e5` | Unfilled slider track |
-| `--fp-bar-fill` | `#000` | Filled slider track / pressed toggle |
-| `--fp-bar-h` | `26px` | Bar (segment) height |
-| `--fp-bar-radius` | `6px` | Bar corner radius |
-| `--fp-speed` | `0.18s` | Reveal transition |
+| `--glyphrow-accent` | `#000` | Focus rings, slider/checkbox accent |
+| `--glyphrow-bg` / `--glyphrow-fg` | `#fff` / `#000` | Component background / text |
+| `--glyphrow-bar-bg` | `#fff` | Bar background |
+| `--glyphrow-bar-track` | `#e5e5e5` | Unfilled slider track |
+| `--glyphrow-bar-fill` | `#000` | Filled slider track / pressed toggle |
+| `--glyphrow-bar-h` | `26px` | Bar (segment) height |
+| `--glyphrow-bar-radius` | `6px` | Bar corner radius |
+| `--glyphrow-speed` | `0.18s` | Reveal transition |
 
-Override any of them, e.g. `.fp { --fp-accent: #e11d48; }`.
+Override any of them, e.g. `.glyphrow { --glyphrow-accent: #e11d48; }`.
 
-A faithful **TDF green-on-black** preset ships built in — add `fp--tdf` to the host:
+A **dark green-on-black** preset ships built in — add `glyphrow--dark` to the host:
 
 ```js
-new FontProof(el, { /* … */ });
-el.classList.add("fp--tdf");
-// React: <FontProofComponent className="fp--tdf" … />
+new Glyphrow(el, { /* … */ });
+el.classList.add("glyphrow--dark");
+// React: <Glyphrow className="glyphrow--dark" … />
 ```
 
 ## Migrating from v1
 
 | v1 (jQuery attributes) | v2 |
 | --- | --- |
-| `class="typeTester"` | `data-fontproof` (or `new FontProof(el, …)`) |
+| `class="typeTester"` | `data-glyphrow` (or `new Glyphrow(el, …)`) |
 | `font="Inter"` | `data-font="Inter"` / `fontFamily: "Inter"` |
 | `size="90"` / `size=""` (fit) | `data-size="90"` / `data-size="fit"` |
 | `weightoptions="true"` | `data-controls="weight"` / `controls: { weight: true }` |
@@ -284,7 +284,7 @@ el.classList.add("fp--tdf");
 | magic words `"yup"`, `"nope"` | plain booleans / `"true"` / `"false"` |
 | jQuery + jQuery UI + BigText | **no dependencies** |
 
-The v1 source remains available at the [`v1.0.0`](https://github.com/quitequinn/fontproof/releases/tag/v1.0.0) git tag.
+The v1 source remains available at the [`v1.0.0`](https://github.com/quitequinn/glyphrow/releases/tag/v1.0.0) git tag.
 
 ## Development
 

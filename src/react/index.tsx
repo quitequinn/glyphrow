@@ -1,25 +1,25 @@
-// React wrapper around the framework-agnostic FontProof core. React is a peer
+// React wrapper around the framework-agnostic Glyphrow core. React is a peer
 // dependency, externalised at build time, so the core stays dependency-free.
 
 import { useEffect, useRef } from "react";
-import { FontProof } from "../core/fontProof.js";
-import type { FontProofOptions, FontProofState } from "../core/types.js";
+import { Glyphrow as GlyphrowCore } from "../core/glyphrow.js";
+import type { GlyphrowOptions, GlyphrowState } from "../core/types.js";
 
-/** Props for {@link FontProofComponent}. Mirrors {@link FontProofOptions}. */
-export interface FontProofProps extends FontProofOptions {
+/** Props for {@link Glyphrow}. Mirrors {@link GlyphrowOptions}. */
+export interface GlyphrowProps extends GlyphrowOptions {
 	/** Class applied to the host element. */
 	className?: string;
 }
 
 /**
- * Renders a {@link FontProof} into a host div. The instance is recreated when
+ * Renders a {@link GlyphrowCore} into a host div. The instance is recreated when
  * any structural option changes and is always torn down on unmount.
  */
-export function FontProofComponent(props: FontProofProps): JSX.Element {
+export function Glyphrow(props: GlyphrowProps): JSX.Element {
 	const { className, onChange, ...options } = props;
 	const hostRef = useRef<HTMLDivElement>(null);
 	// Keep the latest onChange without forcing a tester rebuild on each render.
-	const onChangeRef = useRef<((state: FontProofState) => void) | undefined>(onChange);
+	const onChangeRef = useRef<((state: GlyphrowState) => void) | undefined>(onChange);
 	onChangeRef.current = onChange;
 
 	// Serialise structural options so the effect only re-runs on real changes.
@@ -28,7 +28,7 @@ export function FontProofComponent(props: FontProofProps): JSX.Element {
 	useEffect(() => {
 		const host = hostRef.current;
 		if (!host) return;
-		const instance = new FontProof(host, {
+		const instance = new GlyphrowCore(host, {
 			...options,
 			onChange: (state) => onChangeRef.current?.(state),
 		});
@@ -39,15 +39,23 @@ export function FontProofComponent(props: FontProofProps): JSX.Element {
 	return <div ref={hostRef} className={className} />;
 }
 
-export { FontProof } from "../core/fontProof.js";
+/** @deprecated Renamed to {@link Glyphrow}. */
+export const FontProofComponent = Glyphrow;
+
+// Re-export the framework-agnostic core class for convenience, plus its
+// deprecated pre-3.0 name.
+export { GlyphrowCore };
+/** @deprecated The core class was renamed to `Glyphrow` (see `glyphrow`). */
+export { GlyphrowCore as FontProof };
+
 export type {
 	Align,
 	AxisConfig,
 	ControlsConfig,
 	Range,
 	Size,
-	FontProofOptions,
-	FontProofState,
+	GlyphrowOptions,
+	GlyphrowState,
 	VariableConfig,
 } from "../core/types.js";
 export type { FeatureTag } from "../core/opentype.js";

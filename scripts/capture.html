@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>FontProof — asset capture</title>
+		<title>Glyphrow — asset capture</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
@@ -39,7 +39,7 @@
 				opacity: 0.55;
 			}
 			/* Force the control bar open for the hero capture (normally focus-gated). */
-			.show-bar .fp__controls {
+			.show-bar .glyphrow__controls {
 				max-height: none !important;
 				opacity: 1 !important;
 				overflow: visible !important;
@@ -52,22 +52,22 @@
 	<body>
 		<div id="stage"></div>
 		<script type="module">
-			import { FontProof } from "/dist/index.js";
+			import { Glyphrow } from "/dist/index.js";
 
 			const FR_VAR = { wght: { min: 100, max: 900 }, opsz: { min: 9, max: 144, default: 40, label: "Optical" } };
 
 			// Each scene: id (output filename), background, foreground token overrides,
-			// and one or more rows (label + FontProof config).
+			// and one or more rows (label + Glyphrow config).
 			const SCENES = [
 				{
 					id: "bar",
 					showBar: true,
-					vars: { "--fp-bg": "#0b0b0c", "--fp-fg": "#ededed", "--fp-bar-bg": "#1c1c1f", "--fp-bar-track": "#2c2c31", "--fp-bar-fill": "#ededed", "--fp-accent": "#8ab4ff" },
+					vars: { "--glyphrow-bg": "#0b0b0c", "--glyphrow-fg": "#ededed", "--glyphrow-bar-bg": "#1c1c1f", "--glyphrow-bar-track": "#2c2c31", "--glyphrow-bar-fill": "#ededed", "--glyphrow-accent": "#8ab4ff" },
 					bg: "#0b0b0c",
 					rows: [
 						{
 							cfg: {
-								text: "FontProof AaBb123",
+								text: "Glyphrow AaBb123",
 								fontFamily: "Fraunces",
 								size: 88,
 								weight: 480,
@@ -80,7 +80,7 @@
 				{
 					id: "axes",
 					bg: "#0b0b0c",
-					vars: { "--fp-bg": "transparent", "--fp-fg": "#ededed" },
+					vars: { "--glyphrow-bg": "transparent", "--glyphrow-fg": "#ededed" },
 					rows: [
 						{ label: "wght 200 · opsz 12", cfg: { text: "Optical", fontFamily: "Fraunces", size: 84, weight: 200, variable: { wght: { min: 100, max: 900 }, opsz: { min: 9, max: 144, default: 12 } } } },
 						{ label: "wght 850 · opsz 144", cfg: { text: "Optical", fontFamily: "Fraunces", size: 84, weight: 850, variable: { wght: { min: 100, max: 900 }, opsz: { min: 9, max: 144, default: 144 } } } },
@@ -89,7 +89,7 @@
 				{
 					id: "features",
 					bg: "#0b0b0c",
-					vars: { "--fp-bg": "transparent", "--fp-fg": "#ededed" },
+					vars: { "--glyphrow-bg": "transparent", "--glyphrow-fg": "#ededed" },
 					rows: [
 						{ label: "default — lining figures", cfg: { text: "Hamburg 0123 1/2", fontFamily: "Fraunces", size: 60, weight: 460 } },
 						{ label: "onum + frac", cfg: { text: "Hamburg 0123 1/2", fontFamily: "Fraunces", size: 60, weight: 460, features: ["onum", "frac"] } },
@@ -98,7 +98,7 @@
 				{
 					id: "colour",
 					bg: "#101014",
-					vars: { "--fp-bg": "transparent", "--fp-fg": "#ededed" },
+					vars: { "--glyphrow-bg": "transparent", "--glyphrow-fg": "#ededed" },
 					rows: [
 						{ label: "palette --sunset", cfg: { text: "Colour", fontFamily: "Nabla", size: 96, palette: "--sunset", variable: { EDPT: { min: 0, max: 200, default: 100 }, EHLT: { min: 0, max: 24, default: 12 } } } },
 						{ label: "palette --candy", cfg: { text: "Colour", fontFamily: "Nabla", size: 96, palette: "--candy", variable: { EDPT: { min: 0, max: 200, default: 100 }, EHLT: { min: 0, max: 24, default: 12 } } } },
@@ -119,7 +119,7 @@
 					if (row.label) {
 						const lbl = document.createElement("div");
 						lbl.className = "lbl";
-						lbl.style.color = scene.vars["--fp-fg"] || "#111";
+						lbl.style.color = scene.vars["--glyphrow-fg"] || "#111";
 						lbl.textContent = row.label;
 						rowEl.appendChild(lbl);
 					}
@@ -127,7 +127,7 @@
 					for (const [k, v] of Object.entries(scene.vars)) host.style.setProperty(k, v);
 					rowEl.appendChild(host);
 					el.appendChild(rowEl);
-					new FontProof(host, row.cfg);
+					new Glyphrow(host, row.cfg);
 				}
 			}
 

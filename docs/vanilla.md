@@ -6,18 +6,18 @@ via a CDN that serves ES modules.
 ## Install
 
 ```bash
-npm install fontproof
+npm install glyphrow
 ```
 
 ```js
-import { FontProof, autoInit } from "fontproof";
-import "fontproof/styles.css";
+import { Glyphrow, autoInit } from "glyphrow";
+import "glyphrow/styles.css";
 ```
 
 ## Programmatic API
 
 ```js
-const tester = new FontProof(host, options);
+const tester = new Glyphrow(host, options);
 tester.getState(); // snapshot of the current typographic state
 tester.destroy();  // remove all DOM, listeners and observers
 ```
@@ -27,7 +27,7 @@ tester.destroy();  // remove all DOM, listeners and observers
 ### Example
 
 ```js
-const tester = new FontProof(document.querySelector("#demo"), {
+const tester = new Glyphrow(document.querySelector("#demo"), {
   text: "Hamburgevons",
   fontFamily: "Inter",
   fallback: "Helvetica, Arial, sans-serif",
@@ -55,7 +55,7 @@ Mark up an element and call `autoInit()`:
 
 ```html
 <div
-  data-fontproof
+  data-glyphrow
   data-font="Inter"
   data-size="96"
   data-text="Typography"
@@ -69,7 +69,7 @@ Mark up an element and call `autoInit()`:
 ```
 
 ```js
-import { autoInit } from "fontproof";
+import { autoInit } from "glyphrow";
 autoInit();              // whole document
 autoInit(someContainer); // or a subtree
 ```
@@ -98,7 +98,7 @@ autoInit(someContainer); // or a subtree
 The `variable` axis config (ranges/labels) has no `data-*` form — set it via the
 programmatic API.
 
-`autoInit()` is idempotent: it marks elements with `data-fontproof-ready` and skips
+`autoInit()` is idempotent: it marks elements with `data-glyphrow-ready` and skips
 them on subsequent calls, so it is safe to run after dynamic content loads.
 
 ## Auto-fit

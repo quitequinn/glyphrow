@@ -1,6 +1,8 @@
 // Public surface of the framework-agnostic core.
 
-export { FontProof } from "./fontProof.js";
+export { Glyphrow } from "./glyphrow.js";
+/** @deprecated Renamed to {@link Glyphrow}. */
+export { Glyphrow as FontProof } from "./glyphrow.js";
 export {
 	FEATURES,
 	FEATURE_BY_TAG,
@@ -15,7 +17,10 @@ export type {
 	ControlsConfig,
 	Range,
 	Size,
+	GlyphrowOptions,
+	GlyphrowState,
+	VariableConfig,
+	// Deprecated aliases (renamed in 3.0.0).
 	FontProofOptions,
 	FontProofState,
-	VariableConfig,
 } from "./types.js";

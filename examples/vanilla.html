@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>FontProof — vanilla example</title>
+		<title>Glyphrow — vanilla example</title>
 		<!-- Built stylesheet (run `npm run build` first). -->
 		<link rel="stylesheet" href="../dist/styles.css" />
 		<style>
@@ -13,12 +13,12 @@
 		</style>
 	</head>
 	<body>
-		<h1>FontProof</h1>
+		<h1>Glyphrow</h1>
 
 		<!-- Declarative auto-init -->
 		<div
 			class="demo"
-			data-fontproof
+			data-glyphrow
 			data-text="Typography"
 			data-size="96"
 			data-weight="500"
@@ -31,10 +31,10 @@
 
 		<script type="module">
 			// Built ESM bundle (run `npm run build` first).
-			import { FontProof } from "../dist/index.js";
+			import { Glyphrow } from "../dist/index.js";
 
-			const host = document.querySelector("[data-fontproof]");
-			new FontProof(host, {
+			const host = document.querySelector("[data-glyphrow]");
+			new Glyphrow(host, {
 				text: host.dataset.text,
 				size: Number(host.dataset.size),
 				weight: Number(host.dataset.weight),

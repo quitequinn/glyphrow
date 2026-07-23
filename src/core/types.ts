@@ -1,4 +1,4 @@
-// Public option and state types for the FontProof core.
+// Public option and state types for the Glyphrow core.
 
 import type { FeatureTag } from "./opentype.js";
 
@@ -71,8 +71,8 @@ export interface AxisConfig extends Range {
  */
 export type VariableConfig = Record<string, AxisConfig>;
 
-/** Options accepted by {@link FontProof}. All fields are optional. */
-export interface FontProofOptions {
+/** Options accepted by {@link Glyphrow}. All fields are optional. */
+export interface GlyphrowOptions {
 	/** Initial sample text. */
 	text?: string;
 	/** Primary font-family name to test. */
@@ -120,11 +120,11 @@ export interface FontProofOptions {
 	/** Accessible label for the editable region. */
 	ariaLabel?: string;
 	/** Called whenever the typographic state changes. */
-	onChange?: (state: FontProofState) => void;
+	onChange?: (state: GlyphrowState) => void;
 }
 
 /** The live typographic state of a tester instance. */
-export interface FontProofState {
+export interface GlyphrowState {
 	/** Current text content. */
 	text: string;
 	/** Resolved size in px (the fitted size when in "fit" mode). */
@@ -148,3 +148,9 @@ export interface FontProofState {
 	/** Current colour-font palette (`font-palette`). */
 	palette: string;
 }
+
+/** @deprecated Renamed to {@link GlyphrowOptions}. */
+export type FontProofOptions = GlyphrowOptions;
+
+/** @deprecated Renamed to {@link GlyphrowState}. */
+export type FontProofState = GlyphrowState;
