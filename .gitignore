@@ -13,3 +13,6 @@ coverage
 
 # Local agent/editor config
 .claude/
+
+# Showcase site now lives in Liiift-Studio/glyphrow-site
+/site/
