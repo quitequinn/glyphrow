@@ -25,7 +25,10 @@
 
 .glyphrow__stage {
 	min-width: 0;
-	overflow: hidden;
+	/* Clip long single-line text horizontally, but never vertically — otherwise
+	   tall ascenders/descenders (common in display faces) get sheared off. */
+	overflow-x: clip;
+	overflow-y: visible;
 }
 
 .glyphrow__type {
