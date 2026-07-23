@@ -48,10 +48,8 @@
 	pointer-events: none;
 }
 
-.glyphrow__text:focus-visible {
-	outline: 2px solid var(--glyphrow-accent);
-	outline-offset: 2px;
-}
+/* No focus outline on the editable sample — the text caret already signals
+   focus, and a border here reads as heavy. (Controls keep their focus rings.) */
 
 /* ---- The control bar ------------------------------------------------- */
 /* Hidden until the tester is focused; reveals on :focus-within. */
