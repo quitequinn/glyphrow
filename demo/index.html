@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>FontProof — live demo</title>
+		<title>Glyphrow — live demo</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<!-- Fraunces: an expressive variable serif (weight, italic, optical size,
@@ -41,13 +41,13 @@
 					--code-bg: #161618;
 				}
 				/* Make the specimen + bar follow dark mode too. */
-				.fp {
-					--fp-bg: #161618;
-					--fp-fg: #e7e7ea;
-					--fp-bar-bg: #161618;
-					--fp-bar-track: #34343a;
-					--fp-bar-fill: #e7e7ea;
-					--fp-accent: #8ab4ff;
+				.glyphrow {
+					--glyphrow-bg: #161618;
+					--glyphrow-fg: #e7e7ea;
+					--glyphrow-bar-bg: #161618;
+					--glyphrow-bar-track: #34343a;
+					--glyphrow-bar-fill: #e7e7ea;
+					--glyphrow-accent: #8ab4ff;
 				}
 			}
 
@@ -137,7 +137,7 @@
 				background: var(--panel);
 				border: 1px solid var(--border);
 			}
-			.fp__type {
+			.glyphrow__type {
 				line-height: 1.25;
 			}
 			h2 {
@@ -175,13 +175,13 @@
 	</head>
 	<body>
 		<header>
-			<h1>FontProof</h1>
+			<h1>Glyphrow</h1>
 			<p>
 				A micro toolbar for testing type. Click the sample to reveal the control
 				bar, then adjust size, tracking, weight, italic, alignment, wrap, and
-				composable OpenType features. Install with <code>npm install fontproof</code>
-				— <a href="https://www.npmjs.com/package/fontproof">npm</a> ·
-				<a href="https://github.com/quitequinn/fontproof">GitHub</a>.
+				composable OpenType features. Install with <code>npm install glyphrow</code>
+				— <a href="https://www.npmjs.com/package/glyphrow">npm</a> ·
+				<a href="https://github.com/quitequinn/glyphrow">GitHub</a>.
 			</p>
 		</header>
 
@@ -205,7 +205,7 @@
 		<pre><code id="out"></code></pre>
 
 		<script type="module">
-			import { FontProof } from "./dist/index.js";
+			import { Glyphrow } from "./dist/index.js";
 
 			const host = document.getElementById("demo");
 			const out = document.getElementById("out");
@@ -234,7 +234,7 @@
 			let instance = null;
 			function mount(key) {
 				if (instance) instance.destroy();
-				instance = new FontProof(host, {
+				instance = new Glyphrow(host, {
 					text: "Typography",
 					...FONTS[key],
 					onChange: (state) => {
@@ -244,13 +244,13 @@
 			}
 
 			document.getElementById("font").addEventListener("change", (e) => mount(e.target.value));
-			document.getElementById("values").addEventListener("click", () => host.classList.toggle("fp--show-values"));
+			document.getElementById("values").addEventListener("click", () => host.classList.toggle("glyphrow--show-values"));
 
 			mount("Fraunces");
 
 			// Colour selectors recolour parts of the tester independently via inline
 			// CSS variables (inline styles win over the stylesheet, so they work in
-			// light or dark mode). Each picker maps to one or more --fp-* tokens.
+			// light or dark mode). Each picker maps to one or more --glyphrow-* tokens.
 			function wireColor(id, vars) {
 				const input = document.getElementById(id);
 				const cur = getComputedStyle(host).getPropertyValue(vars[0]).trim();
@@ -259,9 +259,9 @@
 					for (const v of vars) host.style.setProperty(v, input.value);
 				});
 			}
-			wireColor("c-text", ["--fp-fg"]); // the specimen type colour
-			wireColor("c-bg", ["--fp-bg", "--fp-bar-bg"]); // specimen + bar background
-			wireColor("c-controls", ["--fp-bar-fill", "--fp-accent"]); // slider fills, toggles, focus
+			wireColor("c-text", ["--glyphrow-fg"]); // the specimen type colour
+			wireColor("c-bg", ["--glyphrow-bg", "--glyphrow-bar-bg"]); // specimen + bar background
+			wireColor("c-controls", ["--glyphrow-bar-fill", "--glyphrow-accent"]); // slider fills, toggles, focus
 		</script>
 	</body>
 </html>

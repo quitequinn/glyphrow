@@ -1,10 +1,10 @@
 // Main entry: re-exports the core plus a vanilla, declarative auto-initialiser
 // that reads `data-*` attributes — the modern replacement for the legacy
-// attribute-driven `.fontProof` markup (without eval or magic-word strings).
+// attribute-driven `.glyphrow` markup (without eval or magic-word strings).
 
-import { FontProof } from "./core/fontProof.js";
+import { Glyphrow } from "./core/glyphrow.js";
 import { isKnownFeature, type FeatureTag } from "./core/opentype.js";
-import type { Align, ControlsConfig, Size, FontProofOptions } from "./core/types.js";
+import type { Align, ControlsConfig, Size, GlyphrowOptions } from "./core/types.js";
 
 export * from "./core/index.js";
 
@@ -36,7 +36,7 @@ function parseControls(value: string | null): ControlsConfig {
 }
 
 /** Builds options from a host element's dataset. */
-function optionsFromDataset(host: HTMLElement): FontProofOptions {
+function optionsFromDataset(host: HTMLElement): GlyphrowOptions {
 	const d = host.dataset;
 	const sizeAttr = d.size;
 	let size: Size | undefined;
@@ -72,21 +72,22 @@ function optionsFromDataset(host: HTMLElement): FontProofOptions {
 /**
  * Initialises a single host element as a tester from its `data-*` attributes.
  */
-export function createFromElement(host: HTMLElement): FontProof {
-	return new FontProof(host, optionsFromDataset(host));
+export function createFromElement(host: HTMLElement): Glyphrow {
+	return new Glyphrow(host, optionsFromDataset(host));
 }
 
 /**
- * Finds and initialises every `[data-fontproof]` element within `root`
- * (default: document). Returns the created instances. Idempotent: elements
- * already initialised (marked with `data-tt-ready`) are skipped.
+ * Finds and initialises every `[data-glyphrow]` element within `root`
+ * (default: document). The pre-3.0 `[data-fontproof]` attribute is still
+ * honoured. Returns the created instances. Idempotent: elements already
+ * initialised (marked with `data-glyphrow-ready`) are skipped.
  */
-export function autoInit(root: ParentNode = document): FontProof[] {
+export function autoInit(root: ParentNode = document): Glyphrow[] {
 	const hosts = Array.from(
-		root.querySelectorAll<HTMLElement>("[data-fontproof]"),
-	).filter((host) => host.dataset.fontproofReady !== "true");
+		root.querySelectorAll<HTMLElement>("[data-glyphrow], [data-fontproof]"),
+	).filter((host) => host.dataset.glyphrowReady !== "true");
 	return hosts.map((host) => {
-		host.dataset.fontproofReady = "true";
+		host.dataset.glyphrowReady = "true";
 		return createFromElement(host);
 	});
 }

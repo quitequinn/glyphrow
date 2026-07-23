@@ -1,6 +1,6 @@
 # Generating targeted README screenshots
 
-How FontProof's README images are made, why each decision was made, and a
+How Glyphrow's README images are made, why each decision was made, and a
 reusable recipe for doing the same in any UI-component repo. The goal is to turn
 this into a repeatable prompt/skill — the sections below are written to be lifted
 out and generalised.
@@ -70,7 +70,7 @@ side-by-side comparisons in one shot.
    load fonts dynamically.
 
 4. **Force-reveal interactive/hidden UI with a capture-only CSS override.**
-   FontProof's control bar is hidden until `:focus-within`; a `.show-bar` class
+   Glyphrow's control bar is hidden until `:focus-within`; a `.show-bar` class
    in the capture page forces `max-height:none; opacity:1; pointer-events:auto`
    so the bar shows in a static screenshot. Don't fake the markup — override the
    reveal state.
@@ -122,7 +122,7 @@ const SCENES = [
   {
     id: "bar",                 // → assets/bar.png
     bg: "#0b0b0c",             // card background
-    vars: { "--fp-fg": "#ededed", "--fp-bar-fill": "#ededed" }, // host CSS vars
+    vars: { "--glyphrow-fg": "#ededed", "--glyphrow-bar-fill": "#ededed" }, // host CSS vars
     showBar: true,             // apply the force-reveal override
     rows: [                    // 1 row = 1 component instance (+ optional label)
       { label: "wght 850 · opsz 144", cfg: { /* component options */ } },

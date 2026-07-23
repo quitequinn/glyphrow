@@ -1,18 +1,18 @@
 # React guide
 
-React is an optional **peer dependency** (>=17). The `fontproof/react`
+React is an optional **peer dependency** (>=17). The `glyphrow/react`
 entry wraps the dependency-free core in a component.
 
 ## Install
 
 ```bash
-npm install fontproof
+npm install glyphrow
 # react / react-dom are peers you already have in a React app
 ```
 
 ```tsx
-import { FontProofComponent } from "fontproof/react";
-import "fontproof/styles.css";
+import { Glyphrow } from "glyphrow/react";
+import "glyphrow/styles.css";
 ```
 
 ## Basic usage
@@ -20,7 +20,7 @@ import "fontproof/styles.css";
 ```tsx
 export function Demo() {
   return (
-    <FontProofComponent
+    <Glyphrow
       text="Typography"
       fontFamily="Inter"
       size={96}
@@ -30,21 +30,21 @@ export function Demo() {
 }
 ```
 
-`FontProofComponent` accepts every [option](../README.md#options) as a prop,
+`Glyphrow` accepts every [option](../README.md#options) as a prop,
 plus `className` for the host element.
 
 ## Reading state
 
 ```tsx
 import { useState } from "react";
-import { FontProofComponent } from "fontproof/react";
-import type { FontProofState } from "fontproof/react";
+import { Glyphrow } from "glyphrow/react";
+import type { GlyphrowState } from "glyphrow/react";
 
 export function Demo() {
-  const [state, setState] = useState<FontProofState | null>(null);
+  const [state, setState] = useState<GlyphrowState | null>(null);
   return (
     <>
-      <FontProofComponent fontFamily="Inter" size={72} controls={{ weight: true }} onChange={setState} />
+      <Glyphrow fontFamily="Inter" size={72} controls={{ weight: true }} onChange={setState} />
       <pre>{state && JSON.stringify(state, null, 2)}</pre>
     </>
   );
@@ -62,7 +62,7 @@ Configure any axis by tag and enable sliders with `controls.axes` (`wght` uses
 the weight control). For colour fonts, expose palettes with `controls.palette`.
 
 ```tsx
-<FontProofComponent
+<Glyphrow
   fontFamily="Fraunces"
   size={120}
   variable={{
@@ -80,14 +80,14 @@ synthesis reference. All exported types include `AxisConfig` and `VariableConfig
 
 ## TypeScript
 
-All option and state types are exported from `fontproof/react` and
-`fontproof`:
+All option and state types are exported from `glyphrow/react` and
+`glyphrow`:
 
 ```ts
 import type {
-  FontProofOptions,
-  FontProofState,
+  GlyphrowOptions,
+  GlyphrowState,
   ControlsConfig,
   FeatureTag,
-} from "fontproof";
+} from "glyphrow";
 ```
