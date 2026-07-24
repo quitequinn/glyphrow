@@ -68,7 +68,6 @@ export class Glyphrow {
 
 	private typeEl!: HTMLElement;
 	private textEl!: HTMLElement;
-	private liveEl!: HTMLElement;
 	private sizeOutput: HTMLOutputElement | null = null;
 	private fitter: Fitter | null = null;
 	// Last font spec passed to the Font Loading API, so we only request a face
@@ -150,15 +149,9 @@ export class Glyphrow {
 		this.typeEl = el("div", { class: "glyphrow__type", children: [this.textEl] });
 		const stage = el("div", { class: "glyphrow__stage", children: [this.typeEl] });
 
-		this.liveEl = el("div", {
-			class: "glyphrow__sr-only",
-			attrs: { "aria-live": "polite", "aria-atomic": "true" },
-		});
-
 		const controls = this.buildControls();
 		const children: Node[] = [stage];
 		if (controls) children.push(controls);
-		children.push(this.liveEl);
 		this.host.replaceChildren(...children);
 
 		if (this.options.editable !== false) this.wireEditable();
@@ -325,9 +318,7 @@ export class Glyphrow {
 			this.state.palette = select.value;
 			value.textContent = select.value;
 			this.applyStyles();
-			this.emitChange();
-			this.announce(`Palette ${select.value}`);
-		};
+			this.emitChange();		};
 		select.addEventListener("change", handler);
 		this.cleanups.push(() => select.removeEventListener("change", handler));
 		return el("label", {
@@ -352,9 +343,7 @@ export class Glyphrow {
 		const handler = () => {
 			const next = button.getAttribute("aria-pressed") !== "true";
 			button.setAttribute("aria-pressed", String(next));
-			onToggle(next);
-			this.announce(`${label} ${next ? "on" : "off"}`);
-		};
+			onToggle(next);		};
 		button.addEventListener("click", handler);
 		this.cleanups.push(() => button.removeEventListener("click", handler));
 		return button;
@@ -397,9 +386,7 @@ export class Glyphrow {
 				this.state.align = v;
 				value.textContent = v;
 				this.applyStyles();
-				this.emitChange();
-				this.announce(`Alignment ${v}`);
-			}
+				this.emitChange();			}
 		};
 		select.addEventListener("change", handler);
 		this.cleanups.push(() => select.removeEventListener("change", handler));
@@ -512,9 +499,7 @@ export class Glyphrow {
 		else this.activeFeatures.delete(tag);
 		this.state.features = Array.from(this.activeFeatures);
 		this.applyStyles();
-		this.emitChange();
-		this.announce(`${featureLabel(tag)} ${on ? "on" : "off"}`);
-	}
+		this.emitChange();	}
 
 	// ---- behaviour -------------------------------------------------------
 
@@ -613,10 +598,6 @@ export class Glyphrow {
 		} catch {
 			/* invalid font shorthand — ignore */
 		}
-	}
-
-	private announce(message: string): void {
-		this.liveEl.textContent = message;
 	}
 
 	private emitChange(): void {
