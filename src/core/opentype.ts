@@ -90,12 +90,29 @@ export function isKnownFeature(tag: string): boolean {
 }
 
 /**
+ * Features that are on by default in most fonts. Removing them from
+ * `font-feature-settings` reverts them to on, so to actually *disable* one it
+ * must be written explicitly as `"tag" 0`.
+ */
+export const DEFAULT_ON: readonly FeatureTag[] = ["liga", "clig", "calt"];
+
+/**
  * Builds a CSS `font-feature-settings` value from a set of active tags so that
  * multiple features compose (e.g. small caps + oldstyle figures) instead of
- * each selection overwriting the others. Returns "normal" when none are active.
+ * each selection overwriting the others.
+ *
+ * When `offered` is given (the tags exposed by a features control), any
+ * default-on feature that is offered but not active is written as `"tag" 0` so
+ * it can genuinely be turned off. Returns "normal" when nothing is emitted.
  */
-export function featureSettings(active: Iterable<FeatureTag>): string {
-	const tags = Array.from(active).filter(isKnownFeature);
-	if (tags.length === 0) return "normal";
-	return tags.map((tag) => `"${tag}" 1`).join(", ");
+export function featureSettings(active: Iterable<FeatureTag>, offered?: Iterable<FeatureTag>): string {
+	const activeSet = new Set(Array.from(active).filter(isKnownFeature));
+	const parts: string[] = [];
+	for (const tag of activeSet) parts.push(`"${tag}" 1`);
+	if (offered) {
+		for (const tag of offered) {
+			if (DEFAULT_ON.includes(tag) && !activeSet.has(tag)) parts.push(`"${tag}" 0`);
+		}
+	}
+	return parts.length ? parts.join(", ") : "normal";
 }

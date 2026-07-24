@@ -84,8 +84,22 @@ describe("Glyphrow controls", () => {
 		onum.checked = true;
 		onum.dispatchEvent(new Event("change"));
 		const type = host.querySelector<HTMLElement>(".glyphrow__type")!;
-		expect(type.style.fontFeatureSettings).toBe('"smcp" 1, "onum" 1');
-		expect(tester.getState().features).toEqual(["smcp", "onum"]);
+		// Default-on features (liga/clig/calt) are offered and so start active.
+		expect(type.style.fontFeatureSettings).toBe('"liga" 1, "clig" 1, "calt" 1, "smcp" 1, "onum" 1');
+		expect(tester.getState().features).toEqual(["liga", "clig", "calt", "smcp", "onum"]);
+	});
+
+	it("can disable a default-on feature (emits an explicit 0)", () => {
+		const tester = new Glyphrow(host, { controls: { features: true } });
+		const liga = host.querySelector<HTMLInputElement>('.glyphrow__feature input[value="liga"]')!;
+		// Default-on features start checked, reflecting the font's default state.
+		expect(liga.checked).toBe(true);
+		liga.checked = false;
+		liga.dispatchEvent(new Event("change"));
+		const type = host.querySelector<HTMLElement>(".glyphrow__type")!;
+		// Unchecking must emit "liga" 0 — removing it would revert to on.
+		expect(type.style.fontFeatureSettings).toContain('"liga" 0');
+		expect(tester.getState().features).not.toContain("liga");
 	});
 
 	it("toggles the features panel with aria-expanded", () => {
