@@ -294,3 +294,19 @@
 		animation: none !important;
 	}
 }
+
+/* Touch pointers: taller control segments (~44px targets) and a visible slider
+   handle, since the 2px transparent thumb is a poor touch affordance. */
+@media (pointer: coarse) {
+	.glyphrow {
+		--glyphrow-bar-h: 40px;
+	}
+	.glyphrow__slider::-webkit-slider-thumb {
+		width: 4px;
+		opacity: 0.85;
+	}
+	.glyphrow__slider::-moz-range-thumb {
+		width: 4px;
+		opacity: 0.85;
+	}
+}

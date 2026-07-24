@@ -420,7 +420,8 @@ export class Glyphrow {
 			attrs: {
 				type: "button",
 				"aria-label": "Features",
-				"aria-haspopup": "true",
+				// Disclosure pattern: aria-expanded + aria-controls. No aria-haspopup
+				// (the panel is a group of checkboxes, not a menu or dialog).
 				"aria-expanded": "false",
 				"aria-controls": panelId,
 			},
@@ -451,34 +452,44 @@ export class Glyphrow {
 			children: [toggle, panel],
 		});
 
-		const setOpen = (open: boolean) => {
-			toggle.setAttribute("aria-expanded", String(open));
-			panel.toggleAttribute("hidden", !open);
-			if (open) {
-				const first = panel.querySelector<HTMLInputElement>("input");
-				first?.focus();
-			}
-		};
-		const onToggleClick = () => setOpen(toggle.getAttribute("aria-expanded") !== "true");
 		const onKeydown = (e: KeyboardEvent) => {
-			if (e.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+			if (e.key === "Escape") {
 				setOpen(false);
 				toggle.focus();
 			}
 		};
 		const onOutside = (e: MouseEvent) => {
-			if (toggle.getAttribute("aria-expanded") !== "true") return;
 			if (!wrapper.contains(e.target as Node)) setOpen(false);
 		};
+		// Close when focus leaves the whole control (e.g. Tabbing past the last
+		// checkbox) — relatedTarget is the element about to receive focus.
+		const onFocusOut = (e: FocusEvent) => {
+			if (!wrapper.contains(e.relatedTarget as Node | null)) setOpen(false);
+		};
+		// The document-level listeners exist ONLY while the panel is open, so a
+		// page full of testers doesn't accumulate one handler per instance.
+		const setOpen = (open: boolean) => {
+			toggle.setAttribute("aria-expanded", String(open));
+			panel.toggleAttribute("hidden", !open);
+			if (open) {
+				document.addEventListener("keydown", onKeydown);
+				document.addEventListener("click", onOutside);
+				wrapper.addEventListener("focusout", onFocusOut);
+				panel.querySelector<HTMLInputElement>("input")?.focus();
+			} else {
+				document.removeEventListener("keydown", onKeydown);
+				document.removeEventListener("click", onOutside);
+				wrapper.removeEventListener("focusout", onFocusOut);
+			}
+		};
+		const onToggleClick = () => setOpen(toggle.getAttribute("aria-expanded") !== "true");
 		toggle.addEventListener("click", onToggleClick);
-		// Escape is handled at the document level so it closes the panel no matter
-		// where focus currently is, then restores focus to the toggle.
-		document.addEventListener("keydown", onKeydown);
-		document.addEventListener("click", onOutside);
 		this.cleanups.push(() => {
 			toggle.removeEventListener("click", onToggleClick);
+			// Also drop the open-state listeners in case we're destroyed while open.
 			document.removeEventListener("keydown", onKeydown);
 			document.removeEventListener("click", onOutside);
+			wrapper.removeEventListener("focusout", onFocusOut);
 		});
 
 		return wrapper;
@@ -544,8 +555,9 @@ export class Glyphrow {
 
 		// Colour fonts: select the COLR/CPAL palette.
 		s.setProperty("font-palette", this.state.palette);
-		// If opsz is driven manually, stop auto optical-sizing from overriding it.
-		if (this.state.axes.opsz !== undefined) s.setProperty("font-optical-sizing", "none");
+		// If opsz is driven manually, stop auto optical-sizing from overriding it;
+		// otherwise keep the browser default (auto) so it isn't left off.
+		s.setProperty("font-optical-sizing", this.state.axes.opsz !== undefined ? "none" : "auto");
 		// Honest proofing: optionally disable faux bold/italic/small-caps.
 		if (this.options.synthesis === false) s.setProperty("font-synthesis", "none");
 

@@ -22,7 +22,7 @@ tester.getState(); // snapshot of the current typographic state
 tester.destroy();  // remove all DOM, listeners and observers
 ```
 
-`host` is any element; the tester renders into it and adds the `fp` class.
+`host` is any element; the tester renders into it and adds the `glyphrow` class.
 
 ### Example
 
