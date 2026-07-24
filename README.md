@@ -1,16 +1,14 @@
 # Glyphrow
 
-[![npm](https://img.shields.io/npm/v/glyphrow.svg)](https://www.npmjs.com/package/glyphrow)
-[![CI](https://github.com/quitequinn/glyphrow/actions/workflows/ci.yml/badge.svg)](https://github.com/quitequinn/glyphrow/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/glyphrow.svg)](https://www.npmjs.com/package/glyphrow) [![npm downloads](https://img.shields.io/npm/dm/glyphrow.svg)](https://www.npmjs.com/package/glyphrow) [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC) [![by Liiift Studio](https://img.shields.io/badge/by-liiift.studio-blueviolet)](https://liiift.studio)
 
-**[▶ Live demo](https://quitequinn.github.io/glyphrow/)**
+An accessible, **dependency-free type tester** for the web — a compact bar of controls over a live, editable specimen. Adjust size, tracking, weight, italic, alignment, line-wrap, variable-font axes, and **composable OpenType features** live. Ships a framework-agnostic vanilla core and an optional React component.
 
 ![Glyphrow: the segmented control bar (size, tracking, weight, optical, italic, align, wrap, features) beneath a live type specimen](https://raw.githubusercontent.com/quitequinn/glyphrow/master/assets/bar.png?v=2)
 
-A **micro toolbar** for testing type on the web — a compact bar of controls over a
-live, editable sample. Accessible and **dependency-free**: adjust size, tracking,
-weight, italic, alignment, line-wrap, and **composable OpenType features** live.
-Ships a framework-agnostic vanilla core and an optional React component.
+**[glyphrow.com](https://glyphrow.com)** · [npm](https://www.npmjs.com/package/glyphrow) · [GitHub](https://github.com/quitequinn/glyphrow)
+
+TypeScript · Zero dependencies · ~7 kB min+gzip · React + Vanilla JS
 
 > Formerly published as `type-tester-tdf` (and briefly `typebar-tdf`); renamed to
 > **Glyphrow** to reflect what it really is — a focused type-proofing toolbar: a
