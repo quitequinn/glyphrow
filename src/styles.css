@@ -302,7 +302,9 @@
 }
 
 /* Touch pointers: taller control segments (~44px targets) and a visible slider
-   handle, since the 2px transparent thumb is a poor touch affordance. */
+   handle, since the 2px transparent thumb is a poor touch affordance. The
+   control bar is also always shown — revealing it via focus would summon the
+   on-screen keyboard that covers it, making it effectively unreachable. */
 @media (pointer: coarse) {
 	.glyphrow {
 		--glyphrow-bar-h: 40px;
@@ -314,5 +316,13 @@
 	.glyphrow__slider::-moz-range-thumb {
 		width: 4px;
 		opacity: 0.85;
+	}
+	.glyphrow__controls {
+		max-height: none;
+		margin-top: 0.5rem;
+		opacity: 1;
+		overflow: visible;
+		pointer-events: auto;
+		transform: none;
 	}
 }
