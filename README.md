@@ -1,6 +1,6 @@
 # Glyphrow
 
-[![npm](https://img.shields.io/npm/v/glyphrow.svg)](https://www.npmjs.com/package/glyphrow) [![npm downloads](https://img.shields.io/npm/dm/glyphrow.svg)](https://www.npmjs.com/package/glyphrow) [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC) [![by Liiift Studio](https://img.shields.io/badge/by-liiift.studio-blueviolet)](https://liiift.studio)
+[![npm](https://img.shields.io/npm/v/glyphrow.svg)](https://www.npmjs.com/package/glyphrow) [![npm downloads](https://img.shields.io/npm/dm/glyphrow.svg)](https://www.npmjs.com/package/glyphrow) [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 An accessible, **dependency-free type tester** for the web — a compact bar of controls over a live, editable specimen. Adjust size, tracking, weight, italic, alignment, line-wrap, variable-font axes, and **composable OpenType features** live. Ships a framework-agnostic vanilla core and an optional React component.
 
