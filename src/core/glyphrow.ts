@@ -555,6 +555,12 @@ export class Glyphrow {
 		s.setProperty("-webkit-font-feature-settings", settings);
 
 		this.loadFont();
+
+		// Auto-fit sizes to the rendered advance width, which weight, tracking,
+		// features, italic and axis changes all affect. Re-fit so the sample keeps
+		// filling its box instead of overflowing (and being clipped by the stage).
+		// No-op until the Fitter exists (initial render calls this before setupFit).
+		if (this.state.fit) this.fitter?.schedule();
 	}
 
 	/**
