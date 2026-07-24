@@ -1,6 +1,6 @@
 {
   "name": "glyphrow",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "description": "Accessible, dependency-free type tester for the web — a vanilla JS core with an optional React wrapper. Composable OpenType features, variable-font axes, and auto-fit sizing.",
   "type": "module",
   "main": "./dist/index.cjs",
