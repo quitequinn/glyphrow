@@ -1,6 +1,6 @@
 {
   "name": "glyphrow",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "Accessible, dependency-free type tester for the web — a vanilla JS core with an optional React wrapper. Composable OpenType features, variable-font axes, and auto-fit sizing.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -8,14 +8,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./react": {
-      "types": "./dist/react.d.ts",
-      "import": "./dist/react.js",
-      "require": "./dist/react.cjs"
+      "import": {
+        "types": "./dist/react.d.ts",
+        "default": "./dist/react.js"
+      },
+      "require": {
+        "types": "./dist/react.d.cts",
+        "default": "./dist/react.cjs"
+      }
     },
     "./styles.css": "./dist/styles.css"
   },
@@ -24,6 +34,7 @@
     "dist/**/*.cjs",
     "dist/**/*.d.ts",
     "dist/**/*.d.cts",
+    "dist/**/*.map",
     "dist/styles.css"
   ],
   "sideEffects": [
