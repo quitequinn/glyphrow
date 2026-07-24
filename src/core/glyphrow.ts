@@ -139,7 +139,7 @@ export class Glyphrow {
 				"aria-label": this.options.ariaLabel ?? "Sample text",
 				"aria-multiline": String(this.state.wrap),
 				contenteditable: this.options.editable !== false ? "true" : null,
-				spellcheck: "true",
+				spellcheck: String(this.options.spellcheck ?? false),
 				"data-placeholder": this.options.placeholder ?? "Type to test…",
 			},
 		});

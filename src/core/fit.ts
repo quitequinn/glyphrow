@@ -38,6 +38,9 @@ export class Fitter {
 	// notifications caused purely by height changes (a fit grows the line
 	// height, which would otherwise re-trigger the observer in a loop).
 	private lastWidth = -1;
+	// The width fitted before `lastWidth` — used to break a 2-width oscillation
+	// (e.g. our own resize toggling a scrollbar, flipping the width back and forth).
+	private prevWidth = -1;
 
 	/**
 	 * @param target Element whose text is being fitted.
@@ -93,6 +96,9 @@ export class Fitter {
 		const container = this.target.parentElement ?? this.target;
 		const width = container.clientWidth;
 		if (width <= 0) return;
+		// Bouncing back to the width we fitted two fits ago means our own resize is
+		// oscillating (typically a scrollbar appearing/disappearing). Stop.
+		if (width === this.prevWidth && width !== this.lastWidth) return;
 
 		const mirror = this.ensureMirror();
 		const computed = getComputedStyle(this.target);
@@ -105,6 +111,7 @@ export class Fitter {
 		const measured = mirror.getBoundingClientRect().width;
 		if (measured <= 0) return;
 
+		this.prevWidth = this.lastWidth;
 		this.lastWidth = width;
 		const size = clamp((REFERENCE_SIZE * width) / measured, this.min, this.max);
 		this.onFit(Math.round(size * 100) / 100);

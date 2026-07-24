@@ -95,6 +95,11 @@ export interface GlyphrowOptions {
 	features?: FeatureTag[];
 	/** Whether the sample text is user-editable. */
 	editable?: boolean;
+	/**
+	 * Whether the browser spellchecks the editable sample. Off by default — a
+	 * type specimen isn't prose, and red squiggles are visual noise.
+	 */
+	spellcheck?: boolean;
 	/** Placeholder shown when the editable area is empty. */
 	placeholder?: string;
 	/** Which controls to render. Omit to show none (display-only). */
