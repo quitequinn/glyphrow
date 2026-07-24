@@ -1,6 +1,6 @@
 {
   "name": "glyphrow",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Accessible, dependency-free type tester for the web — a vanilla JS core with an optional React wrapper. Composable OpenType features, variable-font axes, and auto-fit sizing.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -40,21 +40,35 @@
   },
   "keywords": [
     "typography",
+    "web-typography",
     "type-tester",
+    "font-tester",
+    "type-specimen",
+    "type-proofing",
     "font",
+    "fonts",
     "opentype",
-    "variable-fonts",
     "font-feature-settings",
+    "variable-fonts",
+    "font-variation-settings",
+    "auto-fit",
+    "glyphrow",
+    "google-fonts",
     "react",
-    "accessibility"
+    "vanilla-js",
+    "framework-agnostic",
+    "accessibility",
+    "zero-dependencies",
+    "typescript",
+    "css"
   ],
-  "author": "Quinn Keaveney",
+  "author": "Quinn Keaveney <quinn@liiift.studio>",
   "license": "ISC",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/quitequinn/glyphrow.git"
   },
-  "homepage": "https://github.com/quitequinn/glyphrow#readme",
+  "homepage": "https://glyphrow.com",
   "bugs": {
     "url": "https://github.com/quitequinn/glyphrow/issues"
   },
