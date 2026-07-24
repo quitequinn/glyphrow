@@ -22,7 +22,8 @@ describe("dataset auto-init", () => {
 		expect(state.size).toBe(48);
 		expect(state.weight).toBe(600);
 		expect(state.align).toBe("center");
-		expect(state.features).toEqual(["smcp", "onum"]);
+		// The offered features control adds the default-on set (liga/clig/calt).
+		expect(state.features).toEqual(["smcp", "onum", "liga", "clig", "calt"]);
 		expect(host.querySelector(".glyphrow__slider--size")).not.toBeNull();
 		expect(host.querySelector(".glyphrow__slider--weight")).not.toBeNull();
 		expect(host.querySelector(".glyphrow__control--features")).not.toBeNull();

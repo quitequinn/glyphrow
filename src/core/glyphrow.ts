@@ -15,6 +15,7 @@ import { clamp, el, toNumber } from "./dom.js";
 import {
 	FEATURES,
 	FEATURE_BY_TAG,
+	DEFAULT_ON,
 	type FeatureDef,
 	type FeatureTag,
 	featureLabel,
@@ -60,6 +61,9 @@ export class Glyphrow {
 	private readonly controls: ControlsConfig;
 	private readonly state: GlyphrowState;
 	private readonly activeFeatures = new Set<FeatureTag>();
+	// Feature tags exposed by the features control (empty when there is none),
+	// used to write an explicit "0" for offered default-on features when off.
+	private offeredFeatures: FeatureTag[] = [];
 	private readonly cleanups: Array<() => void> = [];
 
 	private typeEl!: HTMLElement;
@@ -414,6 +418,14 @@ export class Glyphrow {
 					.map((tag) => FEATURE_BY_TAG.get(tag) ?? { tag, label: featureLabel(tag), group: "Alternates" })
 			: FEATURES;
 
+		this.offeredFeatures = offered.map((f) => f.tag);
+		// Default-on features shown in the control start checked (they're on in the
+		// font); unchecking one then writes an explicit "0" to disable it.
+		for (const f of offered) {
+			if (DEFAULT_ON.includes(f.tag)) this.activeFeatures.add(f.tag);
+		}
+		this.state.features = Array.from(this.activeFeatures);
+
 		const panelId = `glyphrow-feat-${nextId()}`;
 		const toggle = el("button", {
 			class: "glyphrow__toggle glyphrow__toggle--features",
@@ -535,9 +547,14 @@ export class Glyphrow {
 	/** Applies the full typographic state to the type element via element.style. */
 	private applyStyles(): void {
 		const s = this.typeEl.style;
+		// Strip characters that can never appear in a valid font-family value but
+		// could break out of a raw-stylesheet context (the primary family is
+		// quote-stripped in `safeFamily`; the fallback may legitimately contain
+		// commas, quotes and generic names, so only the truly-invalid ones go).
+		const fallback = this.options.fallback?.replace(/[;{}<>]/g, "").trim();
 		const family = this.safeFamily
-			? `"${this.safeFamily}"${this.options.fallback ? `, ${this.options.fallback}` : ", sans-serif"}`
-			: (this.options.fallback ?? "sans-serif");
+			? `"${this.safeFamily}"${fallback ? `, ${fallback}` : ", sans-serif"}`
+			: (fallback ?? "sans-serif");
 		s.fontFamily = family;
 		if (!this.state.fit) s.fontSize = `${this.state.size}px`;
 		s.letterSpacing = `${this.state.tracking}em`;
@@ -561,7 +578,7 @@ export class Glyphrow {
 		// Honest proofing: optionally disable faux bold/italic/small-caps.
 		if (this.options.synthesis === false) s.setProperty("font-synthesis", "none");
 
-		const settings = featureSettings(this.activeFeatures);
+		const settings = featureSettings(this.activeFeatures, this.offeredFeatures);
 		s.fontFeatureSettings = settings;
 		// Older Safari needs the prefixed property; modern engines ignore it.
 		s.setProperty("-webkit-font-feature-settings", settings);
