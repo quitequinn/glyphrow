@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Glyphrow } from "../src/core/glyphrow.js";
 
+// Slider restyles are batched to the next animation frame, so flush one before
+// asserting the resulting inline styles.
+const flushFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
 let host: HTMLDivElement;
 
 beforeEach(() => {
@@ -60,12 +64,13 @@ describe("Glyphrow rendering", () => {
 });
 
 describe("Glyphrow controls", () => {
-	it("updates size from the slider and fires onChange", () => {
+	it("updates size from the slider and fires onChange", async () => {
 		const onChange = vi.fn();
 		new Glyphrow(host, { size: 40, controls: { size: true }, onChange });
 		const slider = host.querySelector<HTMLInputElement>(".glyphrow__slider--size")!;
 		slider.value = "120";
 		slider.dispatchEvent(new Event("input"));
+		await flushFrame();
 		const type = host.querySelector<HTMLElement>(".glyphrow__type")!;
 		expect(type.style.fontSize).toBe("120px");
 		expect(onChange).toHaveBeenCalled();
@@ -138,16 +143,18 @@ describe("Glyphrow controls", () => {
 });
 
 describe("Glyphrow more controls", () => {
-	it("updates tracking and weight from sliders", () => {
+	it("updates tracking and weight from sliders", async () => {
 		new Glyphrow(host, { controls: { tracking: true, weight: true } });
 		const type = host.querySelector<HTMLElement>(".glyphrow__type")!;
 		const tracking = host.querySelector<HTMLInputElement>(".glyphrow__slider--tracking")!;
 		tracking.value = "0.2";
 		tracking.dispatchEvent(new Event("input"));
+		await flushFrame();
 		expect(type.style.letterSpacing).toBe("0.2em");
 		const weight = host.querySelector<HTMLInputElement>(".glyphrow__slider--weight")!;
 		weight.value = "700";
 		weight.dispatchEvent(new Event("input"));
+		await flushFrame();
 		expect(type.style.fontWeight).toBe("700");
 	});
 
@@ -218,7 +225,7 @@ describe("Glyphrow more controls", () => {
 });
 
 describe("Glyphrow variable axes", () => {
-	it("renders a slider per configured non-wght axis and composes them", () => {
+	it("renders a slider per configured non-wght axis and composes them", async () => {
 		const tester = new Glyphrow(host, {
 			weight: 400,
 			variable: { wght: { min: 100, max: 900 }, opsz: { min: 9, max: 144, default: 40 } },
@@ -231,6 +238,7 @@ describe("Glyphrow variable axes", () => {
 		expect(type.style.getPropertyValue("font-variation-settings")).toBe('"wght" 400, "opsz" 40');
 		opsz.value = "100";
 		opsz.dispatchEvent(new Event("input"));
+		await flushFrame();
 		expect(type.style.getPropertyValue("font-variation-settings")).toBe('"wght" 400, "opsz" 100');
 		expect(type.style.getPropertyValue("font-optical-sizing")).toBe("none");
 	});
