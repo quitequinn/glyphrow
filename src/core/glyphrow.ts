@@ -73,6 +73,8 @@ export class Glyphrow {
 	// Last font spec passed to the Font Loading API, so we only request a face
 	// when family/weight/style actually change (not on every size/tracking tick).
 	private lastFontSpec = "";
+	// rAF handle so rapid slider input coalesces to one restyle per frame.
+	private applyFrame = 0;
 
 	/**
 	 * @param host Element to render the tester into.
@@ -122,6 +124,7 @@ export class Glyphrow {
 
 	/** Removes all DOM, listeners and observers created by this instance. */
 	destroy(): void {
+		if (this.applyFrame) cancelAnimationFrame(this.applyFrame);
 		this.fitter?.destroy();
 		this.fitter = null;
 		for (const off of this.cleanups.splice(0)) off();
@@ -248,7 +251,7 @@ export class Glyphrow {
 		this.state.size = clamp(this.state.size, range.min, range.max);
 		return this.buildSlider("size", "Size", range, this.state.size, "px", (v) => {
 			this.state.size = v;
-			this.applyStyles();
+			this.scheduleApply();
 			this.emitChange();
 		});
 	}
@@ -263,7 +266,7 @@ export class Glyphrow {
 			"em",
 			(v) => {
 				this.state.tracking = v;
-				this.applyStyles();
+				this.scheduleApply();
 				this.emitChange();
 			},
 		);
@@ -273,7 +276,7 @@ export class Glyphrow {
 		this.state.weight = clamp(this.state.weight, range.min, range.max);
 		return this.buildSlider("weight", "Weight", range, this.state.weight, "", (v) => {
 			this.state.weight = v;
-			this.applyStyles();
+			this.scheduleApply();
 			this.emitChange();
 		});
 	}
@@ -297,7 +300,7 @@ export class Glyphrow {
 		this.state.axes[tag] = init;
 		return this.buildSlider(`axis-${tag}`, cfg.label ?? tag, range, init, "", (v) => {
 			this.state.axes[tag] = v;
-			this.applyStyles();
+			this.scheduleApply();
 			this.emitChange();
 		});
 	}
@@ -527,6 +530,24 @@ export class Glyphrow {
 	/** The tested family with quotes/backslashes stripped, safe to interpolate. */
 	private get safeFamily(): string {
 		return this.options.fontFamily?.replace(/["\\]/g, "").trim() ?? "";
+	}
+
+	/**
+	 * Coalesces restyles to one per animation frame. Slider `input` fires many
+	 * times per second during a drag; applyStyles rewrites ~a dozen properties
+	 * and rebuilds the feature/axis strings, so batching avoids per-tick churn.
+	 * Falls back to a synchronous apply where rAF isn't available.
+	 */
+	private scheduleApply(): void {
+		if (typeof requestAnimationFrame === "undefined") {
+			this.applyStyles();
+			return;
+		}
+		if (this.applyFrame) return;
+		this.applyFrame = requestAnimationFrame(() => {
+			this.applyFrame = 0;
+			this.applyStyles();
+		});
 	}
 
 	/** Applies the full typographic state to the type element via element.style. */
