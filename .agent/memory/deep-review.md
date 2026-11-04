@@ -41,3 +41,17 @@ Saved: 2026-06-15
   closed as resolved-by-rewrite. Second panel pass fixed: ResizeObserver height
   feedback loop, restricted-features grouping, deterministic ids, document-level
   Escape, aria-multiline string value. 37 tests passing.
+
+## Architecture since 3.1.0 (2026-11-04)
+- Markup is described once in `src/core/view.ts` (`resolveModel` → `buildView` → VNode tree)
+  and rendered three ways: `toDOM` (vanilla core), `toHTML`/`renderHTML` (server string),
+  and `toReact` in the React wrapper. Keep all three in step by changing only the view.
+- The core either builds the view into the host or adopts existing markup (host has
+  `data-glyphrow-rendered`), then wires behaviour by class name. `destroy()` leaves adopted
+  markup in place — intentional, so React/SSR-owned nodes are never removed by the core.
+- React memoises the converted tree per structural-options key; the `children` slot reads
+  from a context so it re-renders without touching core-owned DOM. Do not move nodes the
+  core adopted: style switches show/hide axis sliders via `hidden` and attributes only.
+- Class names and `--glyphrow-*` variables are a documented, stable theming API (README).
+- The live region was removed in 3.0.9 (native controls report their own values); the
+  README's old "polite live region" line was corrected in 3.1.0.

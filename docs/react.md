@@ -30,8 +30,25 @@ export function Demo() {
 }
 ```
 
-`Glyphrow` accepts every [option](../README.md#options) as a prop,
-plus `className` for the host element.
+`Glyphrow` accepts every [option](../README.md#options) as a prop, plus
+`className` for the host element, `children` for [extra controls](#extra-controls)
+and `instanceRef` for the core instance.
+
+## Server rendering
+
+The component renders the tester's **full markup** — the sample at its size,
+in its family, with its features, and the controls bar — so it is in the
+server HTML (Next.js App Router, Remix, `renderToString`…). There is no blank
+area or layout jump, and the sample shows without JavaScript. After hydration
+the core *adopts* that markup and only attaches behaviour; it never rebuilds
+React's nodes.
+
+- It works as a client component (`"use client"`): render it from a server
+  component and it is server-rendered like any other client component.
+- Element ids come from `useId`, so they match between server and client on
+  React 18+. On React 17, pass a stable `idPrefix` when server rendering.
+- With `size="fit"` the size is only known in the browser, so the server markup
+  has no font size and the line is fitted after hydration.
 
 ## Reading state
 
@@ -54,7 +71,56 @@ export function Demo() {
 `onChange` is read from a ref internally, so updating it does not rebuild the
 tester. The instance is rebuilt only when a **structural** option changes
 (serialised via the option object) and is always torn down on unmount via
-`destroy()`.
+`destroy()`. `text` and `lang` are not structural: changing them replaces the
+sample in place (keeping the instance), which is how a language-sample select
+works.
+
+## Extra controls
+
+Children render inside the controls bar (after the built-in controls, or first
+with `extraControlsPosition="start"`). They re-render with your component; the
+tester is not rebuilt. Give an element the `glyphrow__control` class for the
+bar's segment styling.
+
+```tsx
+const SAMPLES = [
+  { lang: "en", label: "English", text: "Hamburgefonstiv" },
+  { lang: "de", label: "Deutsch", text: "Grüße aus Köln" },
+];
+
+export function Tester() {
+  const [i, setI] = useState(0);
+  const [missing, setMissing] = useState("");
+  return (
+    <Glyphrow
+      text={SAMPLES[i].text}
+      lang={SAMPLES[i].lang}
+      styles={styles}
+      controls={{ style: true, size: true, features }}
+      extraControlsPosition="start"
+      onChange={(state) => setMissing(findMissing(state.text, state.style))}
+    >
+      <label className="glyphrow__control">
+        <select aria-label="Sample text" value={i} onChange={(e) => setI(Number(e.target.value))}>
+          {SAMPLES.map((s, n) => <option key={s.lang} value={n}>{s.label}</option>)}
+        </select>
+      </label>
+      {missing && <p className="glyphrow__control my-missing">{missing}</p>}
+    </Glyphrow>
+  );
+}
+```
+
+## The instance
+
+`instanceRef` receives the core instance after mount (and `null` after
+unmount), for `getState()`, `setText(text, lang?)` and `setStyle(style)`:
+
+```tsx
+const ref = useRef<GlyphrowCore | null>(null);
+<Glyphrow instanceRef={ref} styles={styles} />;
+ref.current?.setStyle("bold");
+```
 
 ## Variable & colour fonts
 

@@ -59,6 +59,8 @@ function optionsFromDataset(host: HTMLElement): GlyphrowOptions {
 		align: align && ["left", "center", "right"].includes(align) ? align : undefined,
 		wrap: d.wrap != null ? d.wrap !== "false" : undefined,
 		features: features.length ? features : undefined,
+		lang: d.lang || undefined,
+		dir: d.dir === "ltr" || d.dir === "rtl" || d.dir === "auto" ? d.dir : undefined,
 		editable: d.editable !== "false",
 		placeholder: d.placeholder,
 		ariaLabel: d.ariaLabel,

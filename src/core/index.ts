@@ -9,8 +9,22 @@ export {
 	featureLabel,
 	featureSettings,
 	isKnownFeature,
+	canonicalSettings,
+	composeFeatureSettings,
+	resolveFeature,
 } from "./opentype.js";
-export type { FeatureDef, FeatureGroup, FeatureTag } from "./opentype.js";
+export type {
+	FeatureDef,
+	FeatureGroup,
+	FeatureInput,
+	FeatureOption,
+	FeatureTag,
+	ResolvedFeature,
+} from "./opentype.js";
+export { renderHTML, toHTML } from "./markup.js";
+export type { RenderOptions } from "./markup.js";
+export { buildView, resolveModel } from "./view.js";
+export type { Model, VNode, VAttrs, ViewOptions } from "./view.js";
 export type {
 	Align,
 	AxisConfig,
@@ -19,6 +33,8 @@ export type {
 	Size,
 	GlyphrowOptions,
 	GlyphrowState,
+	GlyphrowLike,
+	StyleOption,
 	VariableConfig,
 	// Deprecated aliases (renamed in 3.0.0).
 	FontProofOptions,

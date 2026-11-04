@@ -8,7 +8,7 @@ An accessible, **dependency-free type tester** for the web — a compact bar of 
 
 **[glyphrow.com](https://glyphrow.com)** · [npm](https://www.npmjs.com/package/glyphrow) · [GitHub](https://github.com/quitequinn/glyphrow)
 
-TypeScript · Zero dependencies · ~7 kB min+gzip · React + Vanilla JS
+TypeScript · Zero dependencies · ~8.5 kB min+gzip · React + Vanilla JS · Server-rendered
 
 > Formerly published as `type-tester-tdf` (and briefly `typebar-tdf`); renamed to
 > **Glyphrow** to reflect what it really is — a focused type-proofing toolbar: a
@@ -26,7 +26,10 @@ TypeScript · Zero dependencies · ~7 kB min+gzip · React + Vanilla JS
 - [React](#react) · full guide in [docs/react.md](./docs/react.md)
 - [Options](#options)
 - [Controls](#controls)
-- [OpenType features](#opentype-features)
+- [Server rendering](#server-rendering)
+- [Styles (one family per style)](#styles-one-family-per-style)
+- [OpenType features](#opentype-features) · [custom labels & samples](#custom-features-labels-and-samples)
+- [Extra controls](#extra-controls)
 - [Accessibility](#accessibility)
 - [Migrating from v1](#migrating-from-v1)
 - [Development](#development)
@@ -101,7 +104,9 @@ export function Demo() {
 }
 ```
 
-React is a **peer dependency** (>=17); the core stays dependency-free.
+React is a **peer dependency** (>=17); the core stays dependency-free. The
+component renders its full markup, so it is
+[server-rendered](#server-rendering) and hydrates without a layout jump.
 
 ## Options
 
@@ -110,7 +115,9 @@ React is a **peer dependency** (>=17); the core stays dependency-free.
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `text` | `string` | `""` | Initial sample text. |
-| `fontFamily` | `string` | — | Primary family to test. |
+| `fontFamily` | `string` | — | Primary family to test (ignored with `styles`). |
+| `styles` | `StyleOption[]` | — | One CSS family per style (see [Styles](#styles-one-family-per-style)). |
+| `style` | `number \| string` | first | Initial style: index or `value`. |
 | `fallback` | `string` | `"sans-serif"` | Fallback stack appended after the family. |
 | `size` | `number \| "fit"` | `80` | Px size, or `"fit"` to auto-fit the container. |
 | `tracking` | `number` | `0` | Letter-spacing in em. |
@@ -118,7 +125,7 @@ React is a **peer dependency** (>=17); the core stays dependency-free.
 | `italic` | `boolean` | `false` | Italic state. |
 | `align` | `"left" \| "center" \| "right"` | `"left"` | Text alignment. |
 | `wrap` | `boolean` | `true` | Multi-line wrap vs single line. |
-| `features` | `string[]` | `[]` | Initially active OpenType feature tags. |
+| `features` | `(string \| FeatureOption)[]` | `[]` | Initially active features; ones not offered stay on. |
 | `editable` | `boolean` | `true` | Whether the sample is user-editable. |
 | `placeholder` | `string` | `"Type to test…"` | Empty-state placeholder (CSS, not real text). |
 | `controls` | `ControlsConfig` | `{}` | Which controls to render (see below). |
@@ -127,7 +134,18 @@ React is a **peer dependency** (>=17); the core stays dependency-free.
 | `palette` | `string` | `"normal"` | Initial colour-font palette (`font-palette`). |
 | `synthesis` | `boolean` | `true` | Allow faux bold/italic. `false` for honest proofing. |
 | `ariaLabel` | `string` | `"Sample text"` | Accessible name for the editable region. |
+| `lang` | `string` | — | Language of the sample (`lang`), for localised forms. |
+| `dir` | `"ltr" \| "rtl" \| "auto"` | — | Direction of the sample. |
+| `plainPaste` | `boolean` | `true` | Paste as plain text on one line. |
+| `extraControls` | nodes or `(slot, tester) => cleanup?` | — | Your own controls in the bar (see [Extra controls](#extra-controls)). |
+| `extraControlsPosition` | `"start" \| "end"` | `"end"` | Where the extra controls sit. |
+| `idPrefix` | `string` | generated | Prefix for element ids (match server and client). |
+| `hydrate` | `boolean` | auto | Adopt server-rendered markup in the host; `false` rebuilds. |
 | `onChange` | `(state) => void` | — | Called on every state change. |
+
+The instance has `getState()`, `setText(text, lang?)`, `setStyle(indexOrValue)`
+and `destroy()`. State includes `style` (the active style's value), `lang`,
+`features` (active built-in tags) and `featureKeys` (every active feature).
 
 When `fontFamily` is set, Glyphrow asks the browser (Font Loading API) to load
 the matching weight/style as you change them, so toggling italic or weight uses
@@ -146,13 +164,80 @@ controls: {
   italic: true,                         // aria-pressed toggle button
   align: true,                          // native <select>
   wrap: true,                           // single-line toggle
-  features: true,                       // full OpenType list (or string[] subset)
+  features: true,                       // full OpenType list, or tags / FeatureOption objects
+  featuresReset: true,                  // "Reset" button in the features panel (or a label)
+  style: true,                          // style select (with the `styles` option)
   axes: true,                           // a slider per variable axis (or string[] subset)
   palette: ["normal", "light", "dark"], // colour-font palette <select> (or `true`)
 }
 ```
 
 Default ranges: size `8–300px`, tracking `-0.1–0.5em`, weight `100–900` step 100.
+
+## Server rendering
+
+The tester's markup is described once and rendered three ways — built into the
+DOM by the vanilla core, serialised by `renderHTML()`, and rendered by the
+React component — so all three produce the same elements. Server-rendered
+markup shows the sample at its size, family and features, and the controls bar,
+**before any JavaScript runs**. On the client the core *adopts* it (attaching
+listeners to the existing elements) instead of rebuilding, so there is no
+blank area and no layout jump.
+
+**React** (Next.js, Remix, any `renderToString`): nothing to do — `<Glyphrow>`
+renders its full markup on the server and hydrates. **Vanilla**:
+
+```js
+// server
+import { renderHTML } from "glyphrow";
+const html = `<div id="tester">${renderHTML(options)}</div>`;
+
+// client
+import { Glyphrow } from "glyphrow";
+new Glyphrow(document.querySelector("#tester > .glyphrow"), options);
+```
+
+Use the same options on both sides. A host with `data-glyphrow-rendered` is
+adopted (`hydrate: false` rebuilds); `destroy()` leaves adopted markup in place.
+With `size: "fit"` the size is only known in the browser, so it is fitted after
+load.
+
+## Styles (one family per style)
+
+When each style of a typeface is served as its **own CSS family** (static or
+variable), pass them as `styles`. A style select switches the family; the
+weight and italic controls are not rendered (the style replaces them).
+
+```js
+new Glyphrow(el, {
+  styles: [
+    { label: "Regular", family: "acme-regular", value: "regular" },
+    { label: "Italic", family: "acme-italic", value: "italic" },
+    {
+      label: "Variable",
+      family: "acme-vf",
+      value: "vf",
+      axes: { wght: { min: 100, max: 900, default: 400, label: "Weight" }, wdth: { min: 75, max: 125, default: 100 } },
+    },
+  ],
+  style: "regular",
+  controls: { style: true, size: true, axes: true },
+});
+```
+
+| `StyleOption` | Meaning |
+| --- | --- |
+| `label` | Name in the select. |
+| `family` | The CSS family that renders it. |
+| `value` | Stable id, reported as `state.style` (default: the index). |
+| `weight` | `font-weight` to set; match the family's `@font-face`. Unset renders at normal. |
+| `italic` | Set `font-style: italic`; only if the `@font-face` declares italic. |
+| `axes` | The style's variable axes, `wght` included; `default` is its own coordinate. |
+
+With `controls.axes`, each axis of any style gets a slider; sliders the shown
+style lacks are hidden, and switching style moves untouched sliders to the new
+style's coordinates (an axis the visitor moved keeps its value). A single-face
+family needs no `weight`/`italic`: leaving them unset avoids faux bold/italic.
 
 ## Variable & colour fonts
 
@@ -215,11 +300,74 @@ featureSettings(["smcp", "onum"]); // => '"smcp" 1, "onum" 1'
 
 ![Fraunces with default lining figures versus oldstyle figures and fractions enabled](https://raw.githubusercontent.com/quitequinn/glyphrow/master/assets/features.png?v=2)
 
-Supported tags include ligatures (`liga`, `dlig`, `hlig`, `clig`), case (`smcp`,
+### Custom features (labels and samples)
+
+`features` and `controls.features` also take objects, so you can show a
+foundry's own names, offer any tag (`cv01`–`cv99`, `titl`, …) or a raw
+`font-feature-settings` value, group the panel and show a sample beside each
+feature. There is no limit on how many. Plain tag strings keep working.
+
+```js
+controls: {
+  features: [
+    { tag: "ss01", label: "Open digits", group: "Figures", sample: "0123" },
+    { tag: "cv03", value: 2, label: "Single-storey a", group: "Alternates", sample: "a" },
+    { settings: "'ss02' 1, 'ss03' 1", label: "Geometric set", group: "Sets" },
+    "onum", // built-in label: "Oldstyle Figures"
+  ],
+  featuresReset: "Reset features",
+},
+features: [{ settings: "'ss05' 1" }], // always on (not offered)
+```
+
+| `FeatureOption` | Meaning |
+| --- | --- |
+| `tag` | Any 4-character tag. |
+| `value` | Value written when on (default `1`). |
+| `settings` | Raw settings instead of `tag`; only quoted tags with an integer/on/off value are kept, anything else drops the feature. |
+| `label` | Shown next to the checkbox (default: built-in label, then the tag). |
+| `group` | Panel heading; any group groups the panel (ungrouped → "Other"). |
+| `sample` | Shown beside the label in the tested font with the feature on (`aria-hidden`; the label names it). |
+
+The features button shows how many features are on (`.glyphrow__count`,
+e.g. "2 on"; default-on ligatures are not counted).
+
+Supported built-in tags include ligatures (`liga`, `dlig`, `hlig`, `clig`), case (`smcp`,
 `c2sc`, `case`, `cpsp`), figures (`lnum`, `onum`, `pnum`, `tnum`, `zero`, `ordn`),
 fractions (`frac`, `afrc`), alternates (`swsh`, `calt`, `salt`, `hist`, `nalt`),
 position (`sups`, `subs`), and stylistic sets `ss01`–`ss20`. Restrict the offered
 set with `controls: { features: ["smcp", "onum", "ss01"] }`.
+
+## Extra controls
+
+Add your own controls to the bar — a language-sample select, a note about
+characters the style lacks. They go in a `.glyphrow__extra` slot
+(`display: contents`, so each child is a bar segment; give it
+`glyphrow__control` for the segment styling), after the built-in controls or
+first with `extraControlsPosition: "start"`.
+
+```tsx
+// React: children
+<Glyphrow text={sample.text} lang={sample.lang} controls={{ size: true }}>
+  <label className="glyphrow__control">
+    <select aria-label="Sample text" onChange={pickSample}>…</select>
+  </label>
+</Glyphrow>
+```
+
+```js
+// Vanilla: nodes, or a function receiving the slot and the instance
+new Glyphrow(el, {
+  extraControls: (slot, tester) => {
+    slot.append(select);
+    select.addEventListener("change", () => tester.setText(texts[select.value], select.value));
+    return () => {/* cleanup on destroy */};
+  },
+});
+```
+
+In React, `text`/`lang` prop changes are applied in place (no rebuild), and
+children re-render with your component without touching the tester.
 
 ## Accessibility
 
@@ -227,9 +375,12 @@ set with `controls: { features: ["smcp", "onum", "ss01"] }`.
   checkbox feature toggles — full keyboard support out of the box.
 - Editable region is a labelled `role="textbox"` with `aria-multiline`; the
   placeholder is CSS-only, so screen readers never read stale text.
-- The features panel manages focus, closes on `Escape` / outside click, and
-  exposes `aria-expanded` / `aria-haspopup`.
-- State changes are announced via a polite live region.
+- The features panel is a disclosure: it manages focus, closes on `Escape` /
+  outside click / focus leaving, and exposes `aria-expanded` / `aria-controls`.
+- No per-tick announcements: each native control reports its own value to
+  assistive tech (a live region here would flood it). Feature samples are
+  `aria-hidden`; the label names the feature.
+- Pasted text is inserted as plain text, so it never brings foreign styling.
 - Toggle states use weight + colour (not colour alone); animations respect
   `prefers-reduced-motion`.
 
@@ -260,7 +411,34 @@ The look is **monochrome by default** and driven by CSS variables on the host:
 | `--glyphrow-bar-radius` | `6px` | Bar corner radius |
 | `--glyphrow-speed` | `0.18s` | Reveal transition |
 
+| `--glyphrow-panel-bg` / `--glyphrow-panel-fg` | bg / fg | Features panel colours |
+| `--glyphrow-panel-border` / `--glyphrow-panel-shadow` | — | Features panel border and shadow |
+| `--glyphrow-fill` | (set per slider) | Filled share of a slider's track, `0%`–`100%` |
+
 Override any of them, e.g. `.glyphrow { --glyphrow-accent: #e11d48; }`.
+
+**Class names are a stable API** for theming (icons, drawn sliders, chips):
+
+| Class | Element |
+| --- | --- |
+| `.glyphrow` (+ `--show-values`, `--dark`) | Host |
+| `.glyphrow__stage` › `.glyphrow__type` › `.glyphrow__text` | Sample (type styles on `__type`) |
+| `.glyphrow__controls` | The bar (`role="group"`) |
+| `.glyphrow__control`, `.glyphrow__control--{key}` | A segment; key = `size`, `tracking`, `weight`, `axis-{tag}`, `align`, `palette`, `style`, `features` |
+| `.glyphrow__caption` › `.glyphrow__label`, `.glyphrow__value` | Title and value overlaid on a segment |
+| `.glyphrow__slider`, `.glyphrow__slider--{key}` (`[data-axis]` on axes) | Range inputs |
+| `.glyphrow__toggle`, `.glyphrow__toggle--{italic,wrap,features}` | Buttons |
+| `.glyphrow__select`, `.glyphrow__select--{align,palette,style}` | Selects |
+| `.glyphrow__count` | Features-on count in the features button |
+| `.glyphrow__panel` › `.glyphrow__feature-group` › `.glyphrow__feature-legend` | Features panel and groups |
+| `.glyphrow__feature` › `input`, `.glyphrow__feature-label`, `.glyphrow__feature-sample` | One feature |
+| `.glyphrow__reset` | Reset button |
+| `.glyphrow__extra` | Slot for your controls |
+
+To keep the bar always visible instead of revealing it on focus, or to give
+visitors a hide/show button, style `.glyphrow__controls` directly, e.g.
+`.my-tester .glyphrow__controls { max-height: none; opacity: 1; overflow: visible; pointer-events: auto; transform: none; }`,
+and toggle a class that sets `display: none` on it.
 
 A **dark green-on-black** preset ships built in — add `glyphrow--dark` to the host:
 

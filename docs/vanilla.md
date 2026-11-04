@@ -18,11 +18,62 @@ import "glyphrow/styles.css";
 
 ```js
 const tester = new Glyphrow(host, options);
-tester.getState(); // snapshot of the current typographic state
-tester.destroy();  // remove all DOM, listeners and observers
+tester.getState();          // snapshot of the current typographic state
+tester.setText("Grüße", "de"); // replace the sample (and its lang)
+tester.setStyle("bold");    // switch style (with the `styles` option)
+tester.destroy();           // remove listeners and observers, and built DOM
 ```
 
 `host` is any element; the tester renders into it and adds the `glyphrow` class.
+
+## Server-rendered markup
+
+`renderHTML(options)` returns the tester's full initial markup as an HTML
+string — the host `div` with the sample at its size and the controls bar — for
+any server (Node, edge, a static build). Text and attributes are escaped.
+
+```js
+// server
+import { renderHTML } from "glyphrow";
+const html = renderHTML(options); // <div class="glyphrow" data-glyphrow-rendered …>…</div>
+```
+
+```js
+// client: adopts the markup instead of rebuilding it
+import { Glyphrow } from "glyphrow";
+new Glyphrow(document.querySelector("#tester > .glyphrow"), options);
+```
+
+A host carrying `data-glyphrow-rendered` (and the type/text elements) is
+*adopted*: the core attaches listeners to the existing elements, so there is
+no flash or layout jump, and the sample reads without JavaScript. Pass the same
+options on both sides; `hydrate: false` forces a rebuild. `destroy()` leaves
+adopted markup in place (it only removes listeners and anything it added).
+
+## Extra controls
+
+`extraControls` adds your own controls to the bar, in a
+`<div class="glyphrow__extra">` slot (`display: contents`, so each child is a
+bar segment; give it `glyphrow__control` for the segment styling). Pass nodes,
+or a function that receives the slot and the instance and may return a cleanup:
+
+```js
+new Glyphrow(host, {
+  text: "Hamburgefonstiv",
+  controls: { size: true },
+  extraControlsPosition: "start", // default "end"
+  extraControls: (slot, tester) => {
+    const select = document.createElement("select");
+    select.setAttribute("aria-label", "Sample text");
+    select.add(new Option("Deutsch", "de"));
+    select.addEventListener("change", () => tester.setText("Grüße aus Köln", select.value));
+    const label = document.createElement("label");
+    label.className = "glyphrow__control";
+    label.append(select);
+    slot.append(label);
+  },
+});
+```
 
 ### Example
 
@@ -90,13 +141,15 @@ autoInit(someContainer); // or a subtree
 | `data-editable` | `editable` (`"false"` for read-only) |
 | `data-placeholder` | `placeholder` |
 | `data-aria-label` | `ariaLabel` |
+| `data-lang` | `lang` (language of the sample) |
+| `data-dir` | `dir` (`ltr`, `rtl` or `auto`) |
 | `data-show-values` | `showValues` (`"true"` to show values inline) |
 | `data-palette` | `palette` (colour-font `font-palette`) |
 | `data-synthesis` | `synthesis` (`"false"` for honest proofing) |
 | `data-controls` | `controls` (comma list of control keys, incl. `axes`, `palette`) |
 
-The `variable` axis config (ranges/labels) has no `data-*` form — set it via the
-programmatic API.
+The `variable` axis config, `styles`, custom feature objects and
+`extraControls` have no `data-*` form — set them via the programmatic API.
 
 `autoInit()` is idempotent: it marks elements with `data-glyphrow-ready` and skips
 them on subsequent calls, so it is safe to run after dynamic content loads.

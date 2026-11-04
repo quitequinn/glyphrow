@@ -269,6 +269,72 @@
 	accent-color: var(--glyphrow-accent);
 }
 
+/* A control the shown style does not use (e.g. an axis it lacks). The class
+   sets display: flex, which would otherwise beat the UA's [hidden] rule. */
+.glyphrow__control[hidden] {
+	display: none;
+}
+
+/* Features toggle: how many non-default features are on ("2 on"). */
+.glyphrow__count {
+	text-transform: none;
+}
+
+.glyphrow__count:empty {
+	display: none;
+}
+
+/* Grouped features (when any offered feature has a group). */
+.glyphrow__feature-group {
+	display: grid;
+	gap: 0.25rem;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.glyphrow__feature-legend {
+	margin: 0.25rem 0;
+	padding: 0;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	opacity: 0.7;
+}
+
+/* A feature's sample, set in the tested font with the feature on. */
+.glyphrow__feature-sample {
+	margin-left: auto;
+	padding-left: 1rem;
+	font-size: 1.15em;
+	font-weight: normal;
+}
+
+.glyphrow__reset {
+	justify-self: start;
+	margin-top: 0.25rem;
+	padding: 0.2rem 0.5rem;
+	font: inherit;
+	color: inherit;
+	background: transparent;
+	border: 1px solid var(--glyphrow-panel-border);
+	border-radius: 0.25rem;
+	cursor: pointer;
+}
+
+.glyphrow__reset:focus-visible {
+	outline: 2px solid var(--glyphrow-accent);
+	outline-offset: 1px;
+}
+
+/* Host-provided extra controls: the slot itself takes no box, so each child
+   is a flex item of the bar (give it glyphrow__control for segment styling). */
+.glyphrow__extra {
+	display: contents;
+}
+
 /* Visually hidden live region for announcements. */
 .glyphrow__sr-only {
 	position: absolute;

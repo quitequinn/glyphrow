@@ -210,10 +210,13 @@ describe("Glyphrow more controls", () => {
 			[
 				"align",
 				"axes",
+				"featureKeys",
 				"features",
 				"fit",
 				"italic",
+				"lang",
 				"palette",
+				"style",
 				"size",
 				"text",
 				"tracking",

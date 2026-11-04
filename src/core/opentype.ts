@@ -129,3 +129,152 @@ export function featureSettings(active: Iterable<FeatureTag>, offered?: Iterable
 	}
 	return parts.length ? parts.join(", ") : "normal";
 }
+
+// ---- Custom features (foundry labels, any tag, raw settings) ---------------
+
+/**
+ * A feature described by the host instead of the built-in table: a foundry's
+ * own name for it ("Open digits" rather than "Stylistic Set 1"), any
+ * four-character tag (`cv01`, `titl`, …) or a raw `font-feature-settings`
+ * value, an optional group heading and an optional sample shown beside it.
+ * Give either `tag` (optionally with `value`) or `settings`.
+ */
+export interface FeatureOption {
+	/** Any four-character OpenType tag, e.g. "ss01" or "cv03". */
+	tag?: string;
+	/** Value written for `tag` when on (default 1), e.g. 3 for the third `cv03` alternate. */
+	value?: number;
+	/**
+	 * A raw `font-feature-settings` value applied when on, e.g. `'ss01' 1` or
+	 * `"ss01", "ss02"`. Only quoted four-character tags with an optional
+	 * integer or on/off value are kept; anything else is dropped.
+	 */
+	settings?: string;
+	/** Label shown next to the checkbox. Defaults to the built-in label, then the tag. */
+	label?: string;
+	/** Group heading in the features panel. Giving any feature a group groups the panel. */
+	group?: string;
+	/** Short sample shown beside the label, set in the tested font with the feature on. */
+	sample?: string;
+}
+
+/** A feature as accepted by `features` / `controls.features`: a built-in tag or a {@link FeatureOption}. */
+export type FeatureInput = FeatureTag | FeatureOption;
+
+/** A feature after validation: what the tester renders and composes. */
+export interface ResolvedFeature {
+	/** Stable identity: the tag, or the canonical settings string. Used as the checkbox value. */
+	key: string;
+	/** Label shown in the panel. */
+	label: string;
+	/** Group heading, if the host gave one. */
+	group?: string;
+	/** Sample shown beside the label, if any. */
+	sample?: string;
+	/** Settings fragment written while the feature is on. */
+	on: string;
+	/** Settings fragment written while it is offered but off (default-on tags only), else undefined. */
+	off?: string;
+	/** True for a default-on tag (liga/clig/calt): offered, it starts checked. */
+	defaultOn: boolean;
+}
+
+/** A valid OpenType tag: exactly four printable letters, digits or spaces. */
+const TAG_RE = /^[A-Za-z0-9 ]{4}$/;
+/** One `"tag" value` pair in a settings string (value optional). */
+const SETTING_RE = /^\s*(["'])([A-Za-z0-9 ]{4})\1(?:\s+(\d{1,3}|on|off))?\s*$/;
+
+/**
+ * Parses a `font-feature-settings` value into a canonical, injection-safe
+ * string (`"ss01" 1, "ss02" 1`). Returns "" when any part is invalid, so a
+ * malformed value is dropped whole rather than half-applied.
+ * @param settings Raw settings, e.g. `'ss01' 1, 'cv03' 2`.
+ */
+export function canonicalSettings(settings: string): string {
+	const parts: string[] = [];
+	for (const part of settings.split(",")) {
+		if (!part.trim()) continue;
+		const match = SETTING_RE.exec(part);
+		if (!match) return "";
+		const raw = match[3] ?? "1";
+		const value = raw === "on" ? "1" : raw === "off" ? "0" : String(Number(raw));
+		parts.push(`"${match[2]}" ${value}`);
+	}
+	return parts.join(", ");
+}
+
+/**
+ * Validates one feature input and resolves its label, settings and identity.
+ * Plain strings must be built-in tags (as before); objects may use any tag or
+ * raw settings. Returns null for anything invalid.
+ * @param input A built-in tag or a {@link FeatureOption}.
+ */
+export function resolveFeature(input: FeatureInput): ResolvedFeature | null {
+	if (typeof input === "string") {
+		if (!isKnownFeature(input)) return null;
+		const def = FEATURE_BY_TAG.get(input)!;
+		const defaultOn = DEFAULT_ON.includes(input);
+		return {
+			key: input,
+			label: def.label,
+			on: `"${input}" 1`,
+			off: defaultOn ? `"${input}" 0` : undefined,
+			defaultOn,
+		};
+	}
+	if (!input || typeof input !== "object") return null;
+	const extra = {
+		...(input.group ? { group: String(input.group) } : {}),
+		...(input.sample ? { sample: String(input.sample) } : {}),
+	};
+	if (typeof input.tag === "string" && TAG_RE.test(input.tag)) {
+		const tag = input.tag;
+		const known = FEATURE_BY_TAG.get(tag as FeatureTag);
+		const value = Number.isInteger(input.value) && input.value! >= 0 ? input.value! : 1;
+		const defaultOn = value === 1 && DEFAULT_ON.includes(tag as FeatureTag);
+		return {
+			key: value === 1 ? tag : `${tag}=${value}`,
+			label: input.label ?? known?.label ?? tag,
+			on: `"${tag}" ${value}`,
+			off: defaultOn ? `"${tag}" 0` : undefined,
+			defaultOn,
+			...extra,
+		};
+	}
+	if (typeof input.settings === "string") {
+		const on = canonicalSettings(input.settings);
+		if (!on) return null;
+		const firstTag = /"(.{4})"/.exec(on)![1] as FeatureTag;
+		return {
+			key: on,
+			label: input.label ?? FEATURE_BY_TAG.get(firstTag)?.label ?? firstTag,
+			on,
+			defaultOn: false,
+			...extra,
+		};
+	}
+	return null;
+}
+
+/**
+ * Composes `font-feature-settings` from resolved features: every active one's
+ * "on" fragment, then the "off" fragment of each offered default-on feature
+ * that is not active. Returns "normal" when nothing is emitted.
+ * @param active Active features, in the order they were turned on.
+ * @param offered Features offered by the control (for explicit "off" values).
+ */
+export function composeFeatureSettings(
+	active: Iterable<ResolvedFeature>,
+	offered: readonly ResolvedFeature[] = [],
+): string {
+	const parts: string[] = [];
+	const activeKeys = new Set<string>();
+	for (const f of active) {
+		activeKeys.add(f.key);
+		parts.push(f.on);
+	}
+	for (const f of offered) {
+		if (f.off && !activeKeys.has(f.key)) parts.push(f.off);
+	}
+	return parts.length ? parts.join(", ") : "normal";
+}
