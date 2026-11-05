@@ -150,4 +150,19 @@ describe("React hydration", () => {
 		root = null;
 		expect(container.children.length).toBe(0);
 	});
+
+	it("moves the instance to a replacement instanceRef and clears the old one", async () => {
+		const first: MutableRefObject<GlyphrowCore | null> = { current: null };
+		const second: MutableRefObject<GlyphrowCore | null> = { current: null };
+		root = createRoot(container);
+		await act(async () => root!.render(createElement(Glyphrow, { text: "A", instanceRef: first })));
+		const instance = first.current;
+		expect(instance).toBeInstanceOf(GlyphrowCore);
+		await act(async () => root!.render(createElement(Glyphrow, { text: "A", instanceRef: second })));
+		expect(second.current).toBe(instance);
+		expect(first.current).toBeNull();
+		await act(async () => root!.unmount());
+		root = null;
+		expect(second.current).toBeNull();
+	});
 });

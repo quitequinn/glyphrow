@@ -10,6 +10,7 @@ export {
 	featureSettings,
 	isKnownFeature,
 	canonicalSettings,
+	builtInTags,
 	composeFeatureSettings,
 	resolveFeature,
 } from "./opentype.js";

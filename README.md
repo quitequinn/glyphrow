@@ -8,7 +8,7 @@ An accessible, **dependency-free type tester** for the web — a compact bar of 
 
 **[glyphrow.com](https://glyphrow.com)** · [npm](https://www.npmjs.com/package/glyphrow) · [GitHub](https://github.com/quitequinn/glyphrow)
 
-TypeScript · Zero dependencies · ~8.5 kB min+gzip · React + Vanilla JS · Server-rendered
+TypeScript · Zero dependencies · ~9 kB min+gzip · React + Vanilla JS · Server-rendered
 
 > Formerly published as `type-tester-tdf` (and briefly `typebar-tdf`); renamed to
 > **Glyphrow** to reflect what it really is — a focused type-proofing toolbar: a
@@ -117,7 +117,7 @@ component renders its full markup, so it is
 | `text` | `string` | `""` | Initial sample text. |
 | `fontFamily` | `string` | — | Primary family to test (ignored with `styles`). |
 | `styles` | `StyleOption[]` | — | One CSS family per style (see [Styles](#styles-one-family-per-style)). |
-| `style` | `number \| string` | first | Initial style: index or `value`. |
+| `style` | `number \| string` | first | Initial style: its index in `styles` (as given) or its `value`. |
 | `fallback` | `string` | `"sans-serif"` | Fallback stack appended after the family. |
 | `size` | `number \| "fit"` | `80` | Px size, or `"fit"` to auto-fit the container. |
 | `tracking` | `number` | `0` | Letter-spacing in em. |
@@ -131,7 +131,7 @@ component renders its full markup, so it is
 | `controls` | `ControlsConfig` | `{}` | Which controls to render (see below). |
 | `showValues` | `boolean` | `false` | Show each control's value inline (e.g. `Size: 96px`). |
 | `variable` | `Record<tag, AxisConfig>` | — | Variable-font axes (see [below](#variable--colour-fonts)). |
-| `palette` | `string` | `"normal"` | Initial colour-font palette (`font-palette`). |
+| `palette` | `string` | `"normal"` | Initial colour-font palette (`font-palette`): `normal`, `light`, `dark` or a `--name`; anything else is ignored. |
 | `synthesis` | `boolean` | `true` | Allow faux bold/italic. `false` for honest proofing. |
 | `ariaLabel` | `string` | `"Sample text"` | Accessible name for the editable region. |
 | `lang` | `string` | — | Language of the sample (`lang`), for localised forms. |
@@ -139,7 +139,7 @@ component renders its full markup, so it is
 | `plainPaste` | `boolean` | `true` | Paste as plain text on one line. |
 | `extraControls` | nodes or `(slot, tester) => cleanup?` | — | Your own controls in the bar (see [Extra controls](#extra-controls)). |
 | `extraControlsPosition` | `"start" \| "end"` | `"end"` | Where the extra controls sit. |
-| `idPrefix` | `string` | generated | Prefix for element ids (match server and client). |
+| `idPrefix` | `string` | generated | Prefix for element ids; generated values are unique per tester and per `renderHTML()` call. |
 | `hydrate` | `boolean` | auto | Adopt server-rendered markup in the host; `false` rebuilds. |
 | `onChange` | `(state) => void` | — | Called on every state change. |
 
@@ -229,14 +229,15 @@ new Glyphrow(el, {
 | --- | --- |
 | `label` | Name in the select. |
 | `family` | The CSS family that renders it. |
-| `value` | Stable id, reported as `state.style` (default: the index). |
+| `value` | Stable id, reported as `state.style` (default: the index). Must be unique: a repeat gets `-<index>` appended, with a warning. |
 | `weight` | `font-weight` to set; match the family's `@font-face`. Unset renders at normal. |
 | `italic` | Set `font-style: italic`; only if the `@font-face` declares italic. |
 | `axes` | The style's variable axes, `wght` included; `default` is its own coordinate. |
 
 With `controls.axes`, each axis of any style gets a slider; sliders the shown
 style lacks are hidden, and switching style moves untouched sliders to the new
-style's coordinates (an axis the visitor moved keeps its value). A single-face
+style's coordinates (an axis the visitor moved keeps its value, even through a
+style without it). Values snap to the slider's `step`, as the browser does. A single-face
 family needs no `weight`/`italic`: leaving them unset avoids faux bold/italic.
 
 ## Variable & colour fonts
@@ -327,7 +328,7 @@ features: [{ settings: "'ss05' 1" }], // always on (not offered)
 | `settings` | Raw settings instead of `tag`; only quoted tags with an integer/on/off value are kept, anything else drops the feature. |
 | `label` | Shown next to the checkbox (default: built-in label, then the tag). |
 | `group` | Panel heading; any group groups the panel (ungrouped → "Other"). |
-| `sample` | Shown beside the label in the tested font with the feature on (`aria-hidden`; the label names it). |
+| `sample` | Shown beside the label in the shown style (family, weight, italic, axes) with the feature on (`aria-hidden`; the label names it). |
 
 The features button shows how many features are on (`.glyphrow__count`,
 e.g. "2 on"; default-on ligatures are not counted).

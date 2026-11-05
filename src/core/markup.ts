@@ -40,6 +40,15 @@ function escapeAttr(value: string): string {
 }
 
 /**
+ * Whether a CSS value can be written into a style attribute as one
+ * declaration: no `;`, braces or comment openers that could end it or start
+ * another (values reaching here are already validated; this is a backstop).
+ */
+function isSafeStyleValue(value: string): boolean {
+	return !/[;{}]|\/\*/.test(value);
+}
+
+/**
  * Serialises a VNode to an HTML string.
  * @param node The node to serialise.
  */
@@ -50,6 +59,7 @@ export function toHTML(node: VNode): string {
 		attrs += value === true ? ` ${name}=""` : ` ${name}="${escapeAttr(String(value))}"`;
 	}
 	const style = Object.entries(node.style ?? {})
+		.filter(([prop, value]) => /^-{0,2}[A-Za-z][\w-]*$/.test(prop) && isSafeStyleValue(value))
 		.map(([prop, value]) => `${prop}: ${value}`)
 		.join("; ");
 	if (style) attrs += ` style="${escapeAttr(style)}"`;
@@ -58,9 +68,12 @@ export function toHTML(node: VNode): string {
 	return `<${node.tag}${attrs}>${inner}</${node.tag}>`;
 }
 
+/** Count of renderHTML calls, for unique default id prefixes (1 and up). */
+let renderCount = 0;
+
 /** Options for {@link renderHTML}. */
 export interface RenderOptions {
-	/** Prefix for element ids; pass the same `idPrefix` to the client instance. Defaults to "glyphrow". */
+	/** Prefix for element ids. Defaults to a new "glyphrow-ssr-N" per call, so several testers on a page never share ids. */
 	idPrefix?: string;
 }
 
@@ -74,6 +87,6 @@ export interface RenderOptions {
  * @param render Id prefix.
  */
 export function renderHTML(options: GlyphrowOptions, render: RenderOptions = {}): string {
-	const idPrefix = options.idPrefix ?? render.idPrefix ?? "glyphrow";
+	const idPrefix = options.idPrefix ?? render.idPrefix ?? `glyphrow-ssr-${++renderCount}`;
 	return toHTML(buildView(resolveModel(options, idPrefix)));
 }

@@ -7,10 +7,9 @@
 import { clamp, toNumber } from "./dom.js";
 import {
 	FEATURES,
+	builtInTags,
 	composeFeatureSettings,
-	isKnownFeature,
 	resolveFeature,
-	type FeatureTag,
 	type ResolvedFeature,
 } from "./opentype.js";
 import type {
@@ -53,7 +52,9 @@ export const ALIGNS: readonly Align[] = ["left", "center", "right"];
 
 /** A validated style from the `styles` option. */
 export interface ResolvedStyle {
-	/** Stable identifier (the given value, or the index as a string). */
+	/** Position in the `styles` option as given (numeric style references use it). */
+	index: number;
+	/** Stable identifier (the given value, or the index as a string); unique within the model. */
 	value: string;
 	/** Name shown in the select. */
 	label: string;
@@ -104,9 +105,39 @@ function resolveRange(value: boolean | Range | undefined, fallback: Range): Rang
 	return { min: value.min, max: value.max, step: value.step ?? fallback.step };
 }
 
-/** Strips quotes and backslashes from a family name so it can be quoted safely. */
+/** Strips quotes, backslashes and CSS/HTML delimiters from a family name so it can be quoted safely. */
 export function safeFamilyName(family: string | undefined): string {
-	return family?.replace(/["\\]/g, "").trim() ?? "";
+	return family?.replace(/["\\;{}<>]/g, "").trim() ?? "";
+}
+
+/** A `font-palette` value the tester accepts: normal, light, dark or a `--custom` palette name. */
+const PALETTE_RE = /^(?:normal|light|dark|--[A-Za-z_][\w-]*)$/;
+
+/** Whether a value is an accepted `font-palette` value (anything else could carry CSS). */
+export function isSafePalette(value: unknown): value is string {
+	return typeof value === "string" && PALETTE_RE.test(value);
+}
+
+/**
+ * Moves a slider value to the nearest step the browser allows, as a range
+ * input does: clamped to [min, max], then snapped to min + n*step (never above max).
+ */
+export function snapToStep(value: number, range: Range): number {
+	const step = range.step && range.step > 0 ? range.step : 1;
+	const decimals = Math.max(decimalsOf(step), decimalsOf(range.min));
+	const round = (v: number) => Number(v.toFixed(decimals));
+	let v = round(range.min + Math.round((clamp(value, range.min, range.max) - range.min) / step) * step);
+	if (v > range.max) v = round(v - step);
+	return clamp(v, range.min, range.max);
+}
+
+/** Number of decimal places in a number's shortest form. */
+function decimalsOf(n: number): number {
+	const text = String(n);
+	const exp = /e-(\d+)$/.exec(text);
+	if (exp) return Number(exp[1]);
+	const dot = text.indexOf(".");
+	return dot < 0 ? 0 : text.length - dot - 1;
 }
 
 /**
@@ -127,7 +158,7 @@ export function axesFor(model: Pick<Model, "styles" | "options">, styleIndex: nu
 /** Index of the style an index-or-value reference names, or -1. */
 export function findStyle(styles: readonly ResolvedStyle[], ref: number | string | undefined): number {
 	if (ref == null) return -1;
-	if (typeof ref === "number") return Number.isInteger(ref) && ref >= 0 && ref < styles.length ? ref : -1;
+	if (typeof ref === "number") return Number.isInteger(ref) ? styles.findIndex((s) => s.index === ref) : -1;
 	return styles.findIndex((s) => s.value === ref);
 }
 
@@ -144,8 +175,18 @@ export function resolveModel(options: GlyphrowOptions, idPrefix: string): Model 
 	(options.styles ?? []).forEach((s, i) => {
 		const family = safeFamilyName(s?.family);
 		if (!family) return;
+		// Values identify styles, so they must be unique: a repeat gets the index appended.
+		let value = s.value != null ? String(s.value) : String(i);
+		if (styles.some((t) => t.value === value)) {
+			const unique = `${value}-${i}`;
+			if (typeof console !== "undefined") {
+				console.warn(`Glyphrow: duplicate style value "${value}", using "${unique}" for style ${i}`);
+			}
+			value = unique;
+		}
 		styles.push({
-			value: s.value != null ? String(s.value) : String(i),
+			index: i,
+			value,
 			label: s.label ?? family,
 			family,
 			...(s.weight != null && Number.isFinite(s.weight) ? { weight: s.weight } : {}),
@@ -197,7 +238,7 @@ export function resolveModel(options: GlyphrowOptions, idPrefix: string): Model 
 	const axisConfig = axesFor({ styles, options }, styleIndex);
 	const axes: Record<string, number> = {};
 	for (const [tag, cfg] of Object.entries(axisConfig)) {
-		axes[tag] = clamp(cfg.default ?? cfg.min, cfg.min, cfg.max);
+		axes[tag] = snapToStep(cfg.default ?? cfg.min, cfg);
 	}
 
 	// Axis sliders: every axis of the current config, or in styles mode the
@@ -223,10 +264,10 @@ export function resolveModel(options: GlyphrowOptions, idPrefix: string): Model 
 		italic: stylesMode ? (style!.italic ?? false) : (options.italic ?? false),
 		align: options.align && ALIGNS.includes(options.align) ? options.align : "left",
 		wrap: options.wrap ?? true,
-		features: initialActive.map((f) => f.key).filter((k): k is FeatureTag => isKnownFeature(k)),
+		features: builtInTags(initialActive),
 		featureKeys: initialActive.map((f) => f.key),
 		axes,
-		palette: options.palette ?? "normal",
+		palette: isSafePalette(options.palette) ? options.palette : "normal",
 		style: style ? style.value : null,
 		lang: options.lang ?? null,
 	};
@@ -300,6 +341,24 @@ export function typeStyle(
 	s["font-feature-settings"] = settings;
 	// Older Safari needs the prefixed property; modern engines ignore it.
 	s["-webkit-font-feature-settings"] = settings;
+	return s;
+}
+
+/**
+ * The inline style of a feature's sample: the shown face (family, weight,
+ * style, axes) with that feature on, so it previews what the sample would
+ * look like in the tester.
+ */
+export function sampleStyle(model: Model, state: GlyphrowState, feature: ResolvedFeature): Record<string, string> {
+	const t = typeStyle(model, state, []);
+	const s: Record<string, string> = {
+		"font-family": t["font-family"]!,
+		"font-weight": t["font-weight"]!,
+		"font-style": t["font-style"]!,
+		"font-variation-settings": t["font-variation-settings"]!,
+		"font-feature-settings": feature.on,
+	};
+	if (t["font-synthesis"]) s["font-synthesis"] = t["font-synthesis"];
 	return s;
 }
 
@@ -385,7 +444,6 @@ function select(key: string, label: string, title: string, options: { value: str
 function featuresControl(model: Model, state: GlyphrowState): VNode {
 	const panelId = `${model.idPrefix}-features`;
 	const activeKeys = new Set(state.featureKeys);
-	const family = familyValue(model, state);
 	const item = (f: (typeof model.offered)[number]): VNode => {
 		const children: VNode[] = [
 			h("input", { type: "checkbox", value: f.key, checked: activeKeys.has(f.key) }),
@@ -393,10 +451,7 @@ function featuresControl(model: Model, state: GlyphrowState): VNode {
 		];
 		if (f.sample) {
 			children.push(
-				h("span", { class: "glyphrow__feature-sample", "aria-hidden": "true" }, f.sample, {
-					"font-family": family,
-					"font-feature-settings": f.on,
-				}),
+				h("span", { class: "glyphrow__feature-sample", "aria-hidden": "true" }, f.sample, sampleStyle(model, state, f)),
 			);
 		}
 		return h("label", { class: "glyphrow__feature" }, children);
@@ -506,7 +561,7 @@ export function buildView(model: Model, view: ViewOptions = {}): VNode {
 	const axisConfig = axesFor(model, styleIndex);
 	for (const tag of model.axisTags) {
 		const cfg = axisConfig[tag] ?? model.styles.map((s) => s.axes[tag]).find(Boolean)!;
-		const value = state.axes[tag] ?? clamp(cfg.default ?? cfg.min, cfg.min, cfg.max);
+		const value = state.axes[tag] ?? snapToStep(cfg.default ?? cfg.min, cfg);
 		items.push(
 			slider(
 				`axis-${tag}`,
@@ -535,7 +590,7 @@ export function buildView(model: Model, view: ViewOptions = {}): VNode {
 	if (controls.wrap) items.push(toggle("wrap", "Wrap", state.wrap));
 	if (controls.features && model.offered.length) items.push(featuresControl(model, state));
 	if (controls.palette) {
-		const palettes = Array.isArray(controls.palette) ? controls.palette : ["normal", "light", "dark"];
+		const palettes = Array.isArray(controls.palette) ? controls.palette.filter(isSafePalette) : ["normal", "light", "dark"];
 		items.push(
 			select("palette", "Palette", "Palette", palettes.map((p) => ({ value: p, text: p })), state.palette, state.palette),
 		);

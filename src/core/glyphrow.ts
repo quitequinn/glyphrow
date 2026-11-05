@@ -15,18 +15,19 @@
 //    fully torn down by destroy() (adopted markup is left in place).
 
 import { Fitter } from "./fit.js";
-import { clamp } from "./dom.js";
-import { isKnownFeature, type FeatureTag, type ResolvedFeature } from "./opentype.js";
+import { builtInTags, type ResolvedFeature } from "./opentype.js";
 import { applyAttrs, toDOM } from "./markup.js";
 import {
 	ALIGNS,
 	axesFor,
 	buildView,
 	featureCount,
-	familyValue,
 	fillPercent,
 	findStyle,
+	isSafePalette,
 	resolveModel,
+	sampleStyle,
+	snapToStep,
 	styleIndexOf,
 	textStyle,
 	typeStyle,
@@ -57,8 +58,9 @@ export class Glyphrow {
 	private readonly state: GlyphrowState;
 	// Active features in the order they were turned on.
 	private readonly active = new Map<string, ResolvedFeature>();
-	// Axes the visitor has moved: kept across style switches (others reset to the new style's default).
-	private readonly touchedAxes = new Set<string>();
+	// Values of axes the visitor has moved, kept across style switches (even
+	// through a style without the axis); other axes take the new style's default.
+	private readonly touchedAxes = new Map<string, number>();
 	private readonly cleanups: Array<() => void> = [];
 	// True when the markup came from the server (or React): destroy leaves it.
 	private adopted = false;
@@ -72,7 +74,8 @@ export class Glyphrow {
 	private styleValue: HTMLElement | null = null;
 	private countEl: HTMLElement | null = null;
 	private featureChecks: HTMLInputElement[] = [];
-	private sampleEls: HTMLElement[] = [];
+	// Feature sample elements and the feature each previews (restyled with the shown face).
+	private samples: Array<{ el: HTMLElement; feature: ResolvedFeature }> = [];
 	private readonly axisSliders = new Map<string, AxisSlider>();
 	private fitter: Fitter | null = null;
 	// Last font spec passed to the Font Loading API, so we only request a face
@@ -101,19 +104,25 @@ export class Glyphrow {
 		if (canAdopt) this.adopted = true;
 		else this.build();
 
-		this.wire();
-		this.applyStyles();
-		this.setupFit();
-		this.mountExtra();
+		try {
+			this.wire();
+			if (this.adopted) this.syncControls();
+			this.applyStyles();
+			this.setupFit();
+			this.mountExtra();
+		} catch (error) {
+			// No instance is returned to destroy, so undo the partial setup here.
+			this.destroy();
+			throw error;
+		}
 	}
 
 	/** Returns a snapshot of the current state. */
 	getState(): GlyphrowState {
-		const keys = Array.from(this.active.keys());
 		return {
 			...this.state,
-			features: keys.filter((k): k is FeatureTag => isKnownFeature(k)),
-			featureKeys: keys,
+			features: builtInTags(this.active.values()),
+			featureKeys: Array.from(this.active.keys()),
 			axes: { ...this.state.axes },
 		};
 	}
@@ -143,13 +152,23 @@ export class Glyphrow {
 		this.state.weight = next.weight ?? 400;
 		this.state.italic = next.italic ?? false;
 
-		// Axes: the new style's own coordinates, except axes the visitor moved,
-		// which keep their value (clamped to the new range).
+		this.applyAxes(index);
+		if (this.styleSelect && this.styleSelect.value !== next.value) this.styleSelect.value = next.value;
+		if (this.styleValue) this.styleValue.textContent = next.label;
+		this.applyStyles();
+		this.emitChange();
+	}
+
+	/**
+	 * Sets the axes for a style index (-1 without styles): the style's own
+	 * coordinates, except axes the visitor moved, which keep their value
+	 * (fitted to the new range and step). Updates every axis slider.
+	 */
+	private applyAxes(index: number): void {
 		const config = axesFor(this.model, index);
 		const axes: Record<string, number> = {};
 		for (const [tag, cfg] of Object.entries(config)) {
-			const kept = this.touchedAxes.has(tag) ? this.state.axes[tag] : undefined;
-			axes[tag] = clamp(kept ?? cfg.default ?? cfg.min, cfg.min, cfg.max);
+			axes[tag] = snapToStep(this.touchedAxes.get(tag) ?? cfg.default ?? cfg.min, cfg);
 		}
 		this.state.axes = axes;
 		for (const [tag, slider] of this.axisSliders) {
@@ -165,13 +184,6 @@ export class Glyphrow {
 			if (slider.label) slider.label.textContent = label;
 			this.syncSlider(slider.input, slider.output, axes[tag]!, "");
 		}
-
-		if (this.styleSelect && this.styleSelect.value !== next.value) this.styleSelect.value = next.value;
-		if (this.styleValue) this.styleValue.textContent = next.label;
-		const family = familyValue(this.model, this.state);
-		for (const sample of this.sampleEls) sample.style.setProperty("font-family", family);
-		this.applyStyles();
-		this.emitChange();
 	}
 
 	/** Removes all listeners and observers; built markup is removed, adopted markup is left in place. */
@@ -189,6 +201,50 @@ export class Glyphrow {
 	}
 
 	// ---- markup ------------------------------------------------------------
+
+	/**
+	 * Brings adopted controls in line with this instance's initial state, so
+	 * markup reused after a destroy (or rendered with other values) never shows
+	 * stale slider, toggle, select or checkbox values.
+	 */
+	private syncControls(): void {
+		const st = this.state;
+		if (this.textEl.textContent !== st.text) this.textEl.textContent = st.text;
+		if (st.lang) this.textEl.setAttribute("lang", st.lang);
+		else this.textEl.removeAttribute("lang");
+		this.textEl.setAttribute("aria-multiline", String(st.wrap));
+
+		const setSlider = (key: string, value: number, unit: string) => {
+			const input = this.find<HTMLInputElement>(`.glyphrow__slider--${key}`);
+			if (!input) return;
+			input.value = String(value);
+			const output = input.closest(".glyphrow__control")?.querySelector<HTMLElement>(".glyphrow__value") ?? null;
+			this.syncSlider(input, output, value, unit);
+		};
+		if (!st.fit) setSlider("size", st.size, "px");
+		setSlider("tracking", st.tracking, "em");
+		setSlider("weight", st.weight, "");
+		this.applyAxes(styleIndexOf(this.model, st));
+
+		this.find(".glyphrow__toggle--italic")?.setAttribute("aria-pressed", String(st.italic));
+		this.find(".glyphrow__toggle--wrap")?.setAttribute("aria-pressed", String(st.wrap));
+		const setSelect = (key: string, value: string, shown: string) => {
+			const select = this.find<HTMLSelectElement>(`.glyphrow__select--${key}`);
+			if (!select) return;
+			select.value = value;
+			const caption = select.closest(".glyphrow__control")?.querySelector(".glyphrow__value");
+			if (caption) caption.textContent = shown;
+		};
+		setSelect("align", st.align, st.align);
+		setSelect("palette", st.palette, st.palette);
+		const style = this.model.styles[styleIndexOf(this.model, st)];
+		if (style) setSelect("style", style.value, style.label);
+
+		for (const input of this.featureChecks) input.checked = this.active.has(input.value);
+		if (this.countEl) this.countEl.textContent = featureCount(this.model, new Set(this.active.keys()));
+		this.find(".glyphrow__toggle--features")?.setAttribute("aria-expanded", "false");
+		this.find(".glyphrow__panel")?.setAttribute("hidden", "");
+	}
 
 	/** Builds the view's markup into the host (its root becomes the host). */
 	private build(): void {
@@ -235,7 +291,7 @@ export class Glyphrow {
 			});
 			this.wireRange(input, "", (v) => {
 				this.state.axes[tag] = v;
-				this.touchedAxes.add(tag);
+				this.touchedAxes.set(tag, v);
 			});
 		}
 
@@ -251,6 +307,7 @@ export class Glyphrow {
 			return true;
 		});
 		this.wireSelect("palette", (v) => {
+			if (!isSafePalette(v)) return false;
 			this.state.palette = v;
 			return true;
 		});
@@ -323,8 +380,13 @@ export class Glyphrow {
 		const panel = wrapper?.querySelector<HTMLElement>(".glyphrow__panel");
 		if (!wrapper || !toggle || !panel) return;
 		this.countEl = toggle.querySelector(".glyphrow__count");
-		this.sampleEls = Array.from(panel.querySelectorAll<HTMLElement>(".glyphrow__feature-sample"));
 		const byKey = new Map(this.model.offered.map((f) => [f.key, f]));
+		this.samples = [];
+		for (const el of panel.querySelectorAll<HTMLElement>(".glyphrow__feature-sample")) {
+			const key = el.closest(".glyphrow__feature")?.querySelector<HTMLInputElement>("input")?.value;
+			const feature = key != null ? byKey.get(key) : undefined;
+			if (feature) this.samples.push({ el, feature });
+		}
 
 		this.featureChecks = Array.from(panel.querySelectorAll<HTMLInputElement>(".glyphrow__feature input"));
 		for (const input of this.featureChecks) {
@@ -389,7 +451,7 @@ export class Glyphrow {
 	}
 
 	private featuresChanged(): void {
-		this.state.features = Array.from(this.active.keys()).filter((k): k is FeatureTag => isKnownFeature(k));
+		this.state.features = builtInTags(this.active.values());
 		this.state.featureKeys = Array.from(this.active.keys());
 		if (this.countEl) this.countEl.textContent = featureCount(this.model, new Set(this.active.keys()));
 		this.applyStyles();
@@ -486,6 +548,12 @@ export class Glyphrow {
 			s.setProperty(prop, value);
 		}
 		for (const [prop, value] of Object.entries(textStyle(this.state))) this.textEl.style.setProperty(prop, value);
+		// Feature samples preview the shown face (style, weight, axes) with their feature on.
+		for (const { el, feature } of this.samples) {
+			for (const [prop, value] of Object.entries(sampleStyle(this.model, this.state, feature))) {
+				el.style.setProperty(prop, value);
+			}
+		}
 
 		this.loadFont();
 
@@ -511,7 +579,14 @@ export class Glyphrow {
 		if (spec === this.lastFontSpec) return;
 		this.lastFontSpec = spec;
 		try {
-			fonts.load(spec).catch(() => {});
+			// Once the face arrives, re-fit: a fit measured with fallback metrics
+			// is wrong for the real glyphs (skipped if the spec changed meanwhile).
+			fonts
+				.load(spec)
+				.then(() => {
+					if (this.state.fit && spec === this.lastFontSpec) this.fitter?.schedule();
+				})
+				.catch(() => {});
 		} catch {
 			/* invalid font shorthand — ignore */
 		}

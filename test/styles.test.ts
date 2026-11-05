@@ -129,11 +129,11 @@ describe("styles", () => {
 		expect(host.querySelector<HTMLElement>(".glyphrow__feature-sample")!.style.fontFamily).toContain("tt-font-bbb");
 	});
 
-	it("drops styles without a family and strips quotes from families", () => {
+	it("drops styles without a family and strips quotes and delimiters from families", () => {
 		new Glyphrow(host, {
 			styles: [{ label: "Bad", family: "" }, { label: "Ok", family: 'Evil"; color: red' }],
 		});
-		expect(type().style.fontFamily).toContain("Evil; color: red");
+		expect(type().style.fontFamily).toContain("Evil color: red");
 		expect(type().style.color).toBe("");
 	});
 });

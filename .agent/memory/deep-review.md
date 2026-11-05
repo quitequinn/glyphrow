@@ -53,5 +53,11 @@ Saved: 2026-06-15
   from a context so it re-renders without touching core-owned DOM. Do not move nodes the
   core adopted: style switches show/hide axis sliders via `hidden` and attributes only.
 - Class names and `--glyphrow-*` variables are a documented, stable theming API (README).
+- PR #62 review fixes (2026-11-05): adoption now resets controls to the new instance's
+  state (`syncControls`); `font-palette` is whitelisted and `toHTML` drops style values with
+  `;{}`; numeric style refs use the original `styles` index; duplicate style values get
+  `-<index>`; touched axis values persist through styles lacking the axis; axis values snap
+  to `step`; samples carry the shown face (`sampleStyle`); `state.features` uses each
+  feature's `tag` (`builtInTags`); `renderHTML` ids default to `glyphrow-ssr-N`.
 - The live region was removed in 3.0.9 (native controls report their own values); the
   README's old "polite live region" line was corrected in 3.1.0.

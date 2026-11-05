@@ -136,13 +136,22 @@ export function Glyphrow(props: GlyphrowProps): ReactElement {
 		});
 		coreRef.current = instance;
 		applied.current = { text: initial.text, lang: initial.lang };
-		if (instanceRef) instanceRef.current = instance;
 		return () => {
 			instance.destroy();
 			coreRef.current = null;
-			if (instanceRef) instanceRef.current = null;
 		};
 	}, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Point the current instanceRef at the instance; runs after the mount
+	// effect, again when the ref object is replaced, and clears the old ref.
+	useEffect(() => {
+		if (!instanceRef) return;
+		const instance = coreRef.current;
+		instanceRef.current = instance;
+		return () => {
+			if (instanceRef.current === instance) instanceRef.current = null;
+		};
+	}, [instanceRef, key]);
 
 	// Apply text/lang prop changes in place (e.g. a language-sample select).
 	useEffect(() => {

@@ -165,6 +165,8 @@ export type FeatureInput = FeatureTag | FeatureOption;
 export interface ResolvedFeature {
 	/** Stable identity: the tag, or the canonical settings string. Used as the checkbox value. */
 	key: string;
+	/** The single OpenType tag a tag-based feature sets (also for `tag=value` keys); undefined for raw settings. */
+	tag?: string;
 	/** Label shown in the panel. */
 	label: string;
 	/** Group heading, if the host gave one. */
@@ -175,7 +177,7 @@ export interface ResolvedFeature {
 	on: string;
 	/** Settings fragment written while it is offered but off (default-on tags only), else undefined. */
 	off?: string;
-	/** True for a default-on tag (liga/clig/calt): offered, it starts checked. */
+	/** True for a default-on tag (liga/clig/calt) at value 1, alone or as raw settings: offered, it starts checked. */
 	defaultOn: boolean;
 }
 
@@ -216,6 +218,7 @@ export function resolveFeature(input: FeatureInput): ResolvedFeature | null {
 		const defaultOn = DEFAULT_ON.includes(input);
 		return {
 			key: input,
+			tag: input,
 			label: def.label,
 			on: `"${input}" 1`,
 			off: defaultOn ? `"${input}" 0` : undefined,
@@ -234,6 +237,7 @@ export function resolveFeature(input: FeatureInput): ResolvedFeature | null {
 		const defaultOn = value === 1 && DEFAULT_ON.includes(tag as FeatureTag);
 		return {
 			key: value === 1 ? tag : `${tag}=${value}`,
+			tag,
 			label: input.label ?? known?.label ?? tag,
 			on: `"${tag}" ${value}`,
 			off: defaultOn ? `"${tag}" 0` : undefined,
@@ -244,16 +248,36 @@ export function resolveFeature(input: FeatureInput): ResolvedFeature | null {
 	if (typeof input.settings === "string") {
 		const on = canonicalSettings(input.settings);
 		if (!on) return null;
-		const firstTag = /"(.{4})"/.exec(on)![1] as FeatureTag;
+		const pairs = Array.from(on.matchAll(/"(.{4})" (\d+)/g), (m) => ({ tag: m[1] as FeatureTag, value: m[2] }));
+		const firstTag = pairs[0]!.tag;
+		// Raw settings that only switch on default-on tags (e.g. `'liga' 1`) are
+		// on in the font already: they start checked and need an explicit 0 to
+		// turn off. Mixed settings keep the font's defaults while unchecked.
+		const defaultOn = pairs.every((p) => p.value === "1" && DEFAULT_ON.includes(p.tag));
 		return {
 			key: on,
 			label: input.label ?? FEATURE_BY_TAG.get(firstTag)?.label ?? firstTag,
 			on,
-			defaultOn: false,
+			off: defaultOn ? pairs.map((p) => `"${p.tag}" 0`).join(", ") : undefined,
+			defaultOn,
 			...extra,
 		};
 	}
 	return null;
+}
+
+/**
+ * The built-in tags among active features, for `state.features`: a
+ * tag-based feature counts by its tag (so `ss01` at value 2 is "ss01"); raw
+ * settings and unknown tags are only in `featureKeys`. Deduplicated, in order.
+ * @param active Active features.
+ */
+export function builtInTags(active: Iterable<ResolvedFeature>): FeatureTag[] {
+	const out: FeatureTag[] = [];
+	for (const f of active) {
+		if (f.tag && isKnownFeature(f.tag) && !out.includes(f.tag)) out.push(f.tag);
+	}
+	return out;
 }
 
 /**
